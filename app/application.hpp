@@ -2,23 +2,10 @@
 #define __APPLICATION_HPP__
 
 #include <glm/glm.hpp>
+#include <app/camera.hpp>
 
 typedef struct GLFWwindow GLFWwindow;
 
-struct Transform
-{
-  glm::vec3 position;
-  glm::vec3 scale;
-  glm::vec3 rotation;
-  float angle;
-};
-
-struct Camera
-{
-  glm::vec3 position;
-  glm::vec3 up;
-  glm::vec3 forward;
-};
 
 class Application
 {
@@ -38,7 +25,7 @@ private:
   void _camera_controller(Camera& camera, float delta_time);
 
 private:
-  GLFWwindow* _window;
+  GLFWwindow* _window;  
 };
 
 #endif // __APPLICATION_HPP__
