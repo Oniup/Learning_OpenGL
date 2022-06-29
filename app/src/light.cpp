@@ -86,11 +86,11 @@ void rotate_light_around_target(Light* light, const Transform& target, float rad
   );
 }
 
-void render_lights(const Light* lights, const int light_count, Shader* shader, const Camera* camera, const glm::mat4& projection, const glm::mat4& view)
+void render_lights(const std::vector<Light>& lights, Shader* shader, const Camera* camera, const glm::mat4& projection, const glm::mat4& view)
 {
   glBindVertexArray(vao);
   shader->bind();
-  for (int i = 0; i < light_count; i++)
+  for (int i = 0; i < lights.size(); i++)
   {
     const Light* light = &lights[i];
 

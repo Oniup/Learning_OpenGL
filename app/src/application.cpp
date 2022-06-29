@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include <vector>
+#include <string>
 
 #include <app/graphics_types.hpp>
 
@@ -16,28 +17,30 @@
 
 #include <app/transform.hpp>
 #include <app/light.hpp>
-
+#include <app/imgui_handler.hpp>
 
 static Camera camera;
+static bool cursor_mode = true;
 
 void mouse_callback(GLFWwindow* window, double x, double y);
-
 
 Application::Application()
 {
   _init_window();
+  init_imgui(this);
 }
 
 Application::~Application()
 {
+  terminate_imgui();
+
   glfwDestroyWindow(_window);
   glfwTerminate();
 }
 
 void Application::run()
 {
-  glfwSetCursorPosCallback(_window, mouse_callback);
-  glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  // glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   Shader shader("app/assets/shaders/basic.vert", "app/assets/shaders/basic.frag");
   Shader light_shader("app/assets/shaders/light.vert", "app/assets/shaders/light.frag");
@@ -111,7 +114,7 @@ void Application::run()
 
   generate_light_vertex_data();
 
-  camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
+  camera.position = glm::vec3(0.0f, 0.0f, 20.0f);
   camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
   camera.forward = glm::vec3(0.0f, 0.0f, -1.0f);
 
@@ -129,17 +132,18 @@ void Application::run()
   objects[1].angle = 0.0f;
 
   static const int light_count = 2;
-  Light lights[light_count];
-  for (int i = 0; i < light_count; i++)
+  std::vector<Light> lights;
+  for (int i = 0; i < 2; i++)
   {
-    Light* light = &lights[i];
-    light->transform.position = glm::vec3(0.0f, 3.0f, 3.0f);
-    light->transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
-    light->transform.rotation = glm::vec3(0.0f, 0.0f, 1.0f);
-    light->transform.angle = 0.0f;
+    Light light;
+    light.transform.position = glm::vec3(0.0f, 3.0f, 3.0f);
+    light.transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
+    light.transform.rotation = glm::vec3(0.0f, 0.0f, 1.0f);
+    light.transform.angle = 0.0f;
 
-    light->type = LIGHT_TYPE_POINT;
-    light->colour = glm::vec4(1.0f, 0.9f, 0.9f, 1.0f);
+    light.type = LIGHT_TYPE_POINT;
+    light.colour = glm::vec4(1.0f, 0.9f, 0.9f, 1.0f);
+    lights.push_back(light);
   }
 
   Light* directional = &lights[0];
@@ -158,6 +162,19 @@ void Application::run()
   {
     glClearColor(ambient_colour.r, ambient_colour.g, ambient_colour.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (glfwGetKey(_window, GLFW_KEY_L) == GLFW_PRESS && !cursor_mode)
+    {
+      cursor_mode = true;
+      glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+      glfwSetCursorPosCallback(_window, nullptr);
+    }
+    else if (glfwGetKey(_window, GLFW_KEY_P) == GLFW_PRESS && cursor_mode)
+    {
+      cursor_mode = false;
+      glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+      glfwSetCursorPosCallback(_window, mouse_callback);
+    }
 
     shader.bind();
     glBindVertexArray(vao);
@@ -192,30 +209,56 @@ void Application::run()
       transform = glm::scale(transform, objects[i].scale);
       transform = glm::rotate(transform, glm::radians(objects[i].angle), objects[i].rotation);
 
-      uint32_t texture_location = glGetUniformLocation(shader.id(), "texture_sample");
-      uint32_t crate_transform_location = glGetUniformLocation(shader.id(), "transform");
-      uint32_t projection_location = glGetUniformLocation(shader.id(), "projection");
-      uint32_t view_location = glGetUniformLocation(shader.id(), "view");
+      uint32_t texture_location = glGetUniformLocation(shader.id(), "u_texture_sample");
+      uint32_t mvp_matrix_location = glGetUniformLocation(shader.id(), "u_mvp");
+      uint32_t view_transform_location = glGetUniformLocation(shader.id(), "u_view_transform");
 
-      uint32_t ambient_colour_location = glGetUniformLocation(shader.id(), "ambient_colour");
-      uint32_t ambient_strength_location = glGetUniformLocation(shader.id(), "ambient_strength");
+      uint32_t ambient_colour_location = glGetUniformLocation(shader.id(), "u_ambient_colour");
+      uint32_t ambient_strength_location = glGetUniformLocation(shader.id(), "u_ambient_strength");
+      uint32_t light_count_location = glGetUniformLocation(shader.id(), "u_light_count");
 
       glUniform1i(texture_location, 0);
 
-      glUniformMatrix4fv(crate_transform_location, 1, GL_FALSE, &transform[0][0]);
-      glUniformMatrix4fv(projection_location, 1, GL_FALSE, &projection[0][0]);
-      glUniformMatrix4fv(view_location, 1, GL_FALSE, &view[0][0]);
+      glm::mat4 view_transform = view * transform;
+      glm::mat4 mvp = projection * view_transform;
+      glUniformMatrix4fv(mvp_matrix_location, 1, GL_FALSE, &mvp[0][0]);
+      glUniformMatrix4fv(view_transform_location, 1, GL_FALSE, &view_transform[0][0]);
 
       // lighting
       glUniform3f(ambient_colour_location, ambient_colour.r, ambient_colour.g, ambient_colour.b);
       glUniform1f(ambient_strength_location, ambient_strength);
+      glUniform1i(light_count_location, lights.size());
+      
+      for (int i = 0; i < lights.size(); i++)
+      {
+        std::string name = "u_light[" + std::to_string(i) + "].";
+
+        uint32_t light_position_location = glGetUniformLocation(shader.id(), std::string(name + "position").c_str());
+        uint32_t light_colour_location = glGetUniformLocation(shader.id(), std::string(name + "colour").c_str());
+        uint32_t light_type_location = glGetUniformLocation(shader.id(), std::string(name + "type").c_str());
+        glUniform3f(
+          light_position_location, lights[i].transform.position.x,
+          lights[i].transform.position.y, lights[i].transform.position.z
+        );
+        glUniform3f(
+          light_colour_location, lights[i].colour.r,
+          lights[i].colour.g, lights[i].colour.b
+        );
+        glUniform1i(light_type_location, (int)lights[i].type);
+      }
 
       glDrawArrays(GL_TRIANGLES, 0, 36);
     }
     shader.unbind();
     glBindVertexArray(0);
 
-    render_lights(lights, light_count, &light_shader, &camera, projection, view);
+    render_lights(lights, &light_shader, &camera, projection, view);
+
+    start_imgui();
+    light_controller_imgui(ambient_colour, lights);
+    end_imgui();
+
+    // ImGui Window Panel Stuff
 
     glfwSwapBuffers(_window);
     glfwPollEvents();
@@ -277,41 +320,44 @@ void Application::_camera_controller(Camera& camera, float delta_time)
 
 void mouse_callback(GLFWwindow* window, double x, double y)
 {
-  static bool first_mouse = true;
-  static float last_x = 0.0f;
-  static float last_y = 0.0f;
-  static float yaw = 0.0f;
-  static float pitch = 0.0f;
-  
-  if (first_mouse)
+  if (!cursor_mode)
   {
+    static bool first_mouse = true;
+    static float last_x = 0.0f;
+    static float last_y = 0.0f;
+    static float yaw = 0.0f;
+    static float pitch = 0.0f;
+    
+    if (first_mouse)
+    {
+      last_x = x;
+      last_y = y;
+      first_mouse = false;
+    }
+    
+    float offset_x = x - last_x;
+    float offset_y = last_y - y; 
     last_x = x;
     last_y = y;
-    first_mouse = false;
+
+    float sensitivity = 0.05f;
+    offset_x *= sensitivity;
+    offset_y *= sensitivity;
+
+    yaw   += offset_x;
+    pitch += offset_y;
+
+    if (pitch > 89.0f)
+      pitch = 89.0f;
+    if (pitch < -89.0f)
+      pitch = -89.0f;
+
+    glm::vec3 direction = glm::vec3(
+      cosf(glm::radians(yaw)) * cosf(glm::radians(pitch)),
+      sinf(glm::radians(pitch)),
+      sinf(glm::radians(yaw)) * cosf(glm::radians(pitch))
+    );
+
+    camera.forward = glm::normalize(direction);
   }
-  
-  float offset_x = x - last_x;
-  float offset_y = last_y - y; 
-  last_x = x;
-  last_y = y;
-
-  float sensitivity = 0.05f;
-  offset_x *= sensitivity;
-  offset_y *= sensitivity;
-
-  yaw   += offset_x;
-  pitch += offset_y;
-
-  if (pitch > 89.0f)
-    pitch = 89.0f;
-  if (pitch < -89.0f)
-    pitch = -89.0f;
-
-  glm::vec3 direction = glm::vec3(
-    cosf(glm::radians(yaw)) * cosf(glm::radians(pitch)),
-    sinf(glm::radians(pitch)),
-    sinf(glm::radians(yaw)) * cosf(glm::radians(pitch))
-  );
-
-  camera.forward = glm::normalize(direction);
 }
