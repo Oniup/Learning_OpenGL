@@ -90,25 +90,23 @@ void render_lights(const std::vector<Light>& lights, Shader* shader, const Camer
 {
   glBindVertexArray(vao);
   shader->bind();
+  glm::mat4 projection_view = projection * view;
   for (int i = 0; i < lights.size(); i++)
   {
     const Light* light = &lights[i];
 
-    glm::mat4 transform = glm::mat4(1.0f);
-    transform = glm::translate(transform, light->transform.position);
-    transform = glm::scale(transform, light->transform.scale);
-    transform = glm::rotate(transform, glm::radians(light->transform.angle), light->transform.rotation);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, light->transform.position);
+    model = glm::scale(model, light->transform.scale);
+    model = glm::rotate(model, glm::radians(light->transform.angle), light->transform.rotation);
 
-    uint32_t crate_transform_location = glGetUniformLocation(shader->id(), "transform");
-    uint32_t projection_location = glGetUniformLocation(shader->id(), "projection");
-    uint32_t view_location = glGetUniformLocation(shader->id(), "view");
+    glm::mat4 final_matrix = projection_view * model;
+    
+    uint32_t u_final_matrix = glGetUniformLocation(shader->id(), "u_final_matrix");
+    uint32_t u_light_colour = glGetUniformLocation(shader->id(), "u_light_colour");
 
-    uint32_t light_colour_location = glGetUniformLocation(shader->id(), "light_colour");
-
-    glUniformMatrix4fv(crate_transform_location, 1, GL_FALSE, &transform[0][0]);
-    glUniformMatrix4fv(projection_location, 1, GL_FALSE, &projection[0][0]);
-    glUniformMatrix4fv(view_location, 1, GL_FALSE, &view[0][0]);
-    glUniform4f(light_colour_location, light->colour.r, light->colour.g, light->colour.b, light->colour.a);
+    glUniformMatrix4fv(u_final_matrix, 1, GL_FALSE, &final_matrix[0][0]);
+    glUniform3f(u_light_colour, light->colour.r, light->colour.g, light->colour.b);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
   }

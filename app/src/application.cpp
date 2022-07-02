@@ -151,7 +151,7 @@ void Application::run()
   directional->type = LIGHT_TYPE_DIRECTIONAL;
 
   float ambient_strength = 0.5f;
-  glm::vec3 ambient_colour = glm::vec3(0.0f, 0.05f, 0.25f);
+  glm::vec4 ambient_colour = glm::vec4(0.0f, 0.05f, 0.25f, 1.0f);
 
   glm::mat4 projection = glm::perspective(
     glm::radians(45.0f), (float)window_width() / (float)window_height(), 
@@ -204,50 +204,47 @@ void Application::run()
       else
         floor_texture.bind(0);
 
-      glm::mat4 transform = glm::mat4(1.0f);
-      transform = glm::translate(transform, objects[i].position);
-      transform = glm::scale(transform, objects[i].scale);
-      transform = glm::rotate(transform, glm::radians(objects[i].angle), objects[i].rotation);
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, objects[i].position);
+      model = glm::scale(model, objects[i].scale);
+      model = glm::rotate(model, glm::radians(objects[i].angle), objects[i].rotation);
 
-      uint32_t texture_location = glGetUniformLocation(shader.id(), "u_texture_sample");
-      uint32_t mvp_matrix_location = glGetUniformLocation(shader.id(), "u_mvp");
-      uint32_t view_transform_location = glGetUniformLocation(shader.id(), "u_view_transform");
+      glm::mat4 view_model = view * model;
 
-      uint32_t ambient_colour_location = glGetUniformLocation(shader.id(), "u_ambient_colour");
-      uint32_t ambient_strength_location = glGetUniformLocation(shader.id(), "u_ambient_strength");
-      uint32_t light_count_location = glGetUniformLocation(shader.id(), "u_light_count");
+      uint32_t u_projection = glGetUniformLocation(shader.id(), "u_projection");
+      uint32_t u_view_model = glGetUniformLocation(shader.id(), "u_view_model");
+      glUniformMatrix4fv(u_projection, 1, GL_FALSE, &projection[0][0]);
+      glUniformMatrix4fv(u_view_model, 1, GL_FALSE, &view_model[0][0]);
 
-      glUniform1i(texture_location, 0);
+      uint32_t u_texture = glGetUniformLocation(shader.id(), "u_texture");
+      glUniform1i(u_texture, 0);
 
-      glm::mat4 view_transform = view * transform;
-      glm::mat4 mvp = projection * view_transform;
-      glUniformMatrix4fv(mvp_matrix_location, 1, GL_FALSE, &mvp[0][0]);
-      glUniformMatrix4fv(view_transform_location, 1, GL_FALSE, &view_transform[0][0]);
-
-      // lighting
-      glUniform3f(ambient_colour_location, ambient_colour.r, ambient_colour.g, ambient_colour.b);
-      glUniform1f(ambient_strength_location, ambient_strength);
-      glUniform1i(light_count_location, lights.size());
-      
       for (int i = 0; i < lights.size(); i++)
       {
-        std::string name = "u_light[" + std::to_string(i) + "].";
+        std::string name = "u_lights[" + std::to_string(i) + "].";
 
-        uint32_t light_position_location = glGetUniformLocation(shader.id(), std::string(name + "position").c_str());
-        uint32_t light_colour_location = glGetUniformLocation(shader.id(), std::string(name + "colour").c_str());
-        uint32_t light_type_location = glGetUniformLocation(shader.id(), std::string(name + "type").c_str());
-        glUniform3f(
-          light_position_location, lights[i].transform.position.x,
-          lights[i].transform.position.y, lights[i].transform.position.z
+        uint32_t u_light_position = glGetUniformLocation(shader.id(), std::string(name + "position").c_str());
+        uint32_t u_light_colour = glGetUniformLocation(shader.id(), std::string(name + "colour").c_str());
+        uint32_t u_lights_count = glGetUniformLocation(shader.id(), "u_lights_count");
+        uint32_t u_ambient_colour = glGetUniformLocation(shader.id(), "u_ambient_colour");
+
+        glm::vec3 position = glm::vec3(view * glm::vec4(lights[i].transform.position, 1.0f));
+
+        glUniform3f(u_light_position,
+          position.x, position.y, position.z
         );
-        glUniform3f(
-          light_colour_location, lights[i].colour.r,
-          lights[i].colour.g, lights[i].colour.b
+        glUniform3f(u_light_colour, 
+          lights[i].colour.r, lights[i].colour.g, lights[i].colour.b
         );
-        glUniform1i(light_type_location, (int)lights[i].type);
+        glUniform1i(u_lights_count, lights.size());
+        glUniform4f(u_ambient_colour,
+          ambient_colour.r, ambient_colour.g, ambient_colour.b, ambient_colour.a
+        );
       }
 
       glDrawArrays(GL_TRIANGLES, 0, 36);
+
+      crate_texture.unbind();
     }
     shader.unbind();
     glBindVertexArray(0);

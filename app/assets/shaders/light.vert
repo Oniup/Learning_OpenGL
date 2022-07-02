@@ -1,12 +1,10 @@
 #version 450 core
 
-layout (location = 0) in vec3 a_vert_pos;
+layout (location = 0) in vec3 a_vertex_pos;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 transform;
+uniform mat4 u_final_matrix;
 
 void main()
 {
-  gl_Position = projection * view * transform * vec4(a_vert_pos.xyz, 1.0);
+  gl_Position = u_final_matrix * vec4(a_vertex_pos.xyz, 1.0);
 }
