@@ -24,7 +24,7 @@ static bool cursor_mode = true;
 
 void mouse_callback(GLFWwindow* window, double x, double y);
 
-Application::Application()
+Application::Application() : _window(nullptr), _width(1280), _height(720)
 {
   _init_window();
   init_imgui(this);
@@ -123,15 +123,13 @@ void Application::run()
   objects[0].scale = glm::vec3(1.0f, 1.0f, 1.0f);
   objects[0].rotation = glm::vec3(1.0f, 0.0f, 1.0f);
   objects[0].angle = 0.0f;
-  float object_0_specular_strength = 0.5f;
   int object_0_shininess = 32;
 
   objects[1].position = glm::vec3(0.0f, -3.0f, 0.0f);
   objects[1].scale = glm::vec3(5.0f, 0.2f, 5.0f);
   objects[1].rotation = glm::vec3(0.0f, 0.0f, 1.0f);
   objects[1].angle = 0.0f;
-  float object_1_specular_strength = 1.0f;
-  int object_1_shininess = 12;
+  int object_1_shininess = 32;
 
   static const int light_count = 2;
   std::vector<Light> lights;
@@ -153,7 +151,7 @@ void Application::run()
   directional->type = LIGHT_TYPE_DIRECTIONAL;
 
   float ambient_strength = 0.5f;
-  glm::vec4 ambient_colour = glm::vec4(0.0f, 0.05f, 0.25f, 1.0f);
+  glm::vec4 ambient_colour = glm::vec4(0.0f, 0.05f, 0.1f, 1.0f);
 
   glm::mat4 projection = glm::perspective(
     glm::radians(45.0f), (float)window_width() / (float)window_height(), 
@@ -200,19 +198,22 @@ void Application::run()
     /*********** RENDERING ***********/
 
     for (int i = 0; i < objects_count; i++)
-    {
-      uint32_t u_specular_strength = glGetUniformLocation(shader.id(), "u_specular_strength");
-      uint32_t u_shininess = glGetUniformLocation(shader.id(), "u_shininess");
+    { 
+      uint32_t u_shininess;     
+      if (using_phong_lighting)
+        u_shininess = glGetUniformLocation(shader.id(), "u_material.shininess");
+      else
+        u_shininess = glGetUniformLocation(shader.id(), "u_shininess");
       if (i == 0)
       {
         crate_texture.bind(0);
-        glUniform1f(u_specular_strength, object_0_specular_strength);
+        crate_specular_texture.bind(1);
         glUniform1i(u_shininess, object_0_shininess);
       }
       else
       {
         floor_texture.bind(0);
-        glUniform1f(u_specular_strength, object_1_specular_strength);
+        floor_specular_texture.bind(1);
         glUniform1i(u_shininess, object_1_shininess);
       }
 
@@ -228,8 +229,10 @@ void Application::run()
       glUniformMatrix4fv(u_projection, 1, GL_FALSE, &projection[0][0]);
       glUniformMatrix4fv(u_view_model, 1, GL_FALSE, &view_model[0][0]);
 
-      uint32_t u_texture = glGetUniformLocation(shader.id(), "u_texture");
-      glUniform1i(u_texture, 0);
+      uint32_t u_material_diffuse = glGetUniformLocation(shader.id(), "u_material.diffuse");
+      uint32_t u_material_specular = glGetUniformLocation(shader.id(), "u_material.specular");
+      glUniform1i(u_material_diffuse, 0);
+      glUniform1i(u_material_specular, 1);
 
       for (int i = 0; i < lights.size(); i++)
       {
@@ -272,6 +275,10 @@ void Application::run()
     // ImGui Window Panel Stuff
 
     glfwSwapBuffers(_window);
+
+    glfwGetFramebufferSize(_window, &_width, &_height);
+    glViewport(0, 0, window_width(), window_height());
+
     glfwPollEvents();
   }
 
@@ -296,6 +303,8 @@ void Application::_init_window()
 
   _window = glfwCreateWindow(window_width(), window_height(), "OpenGL Window", nullptr, nullptr);
   assert(_window && "failed to initialise window for some reason ...");
+
+  glfwSetWindowAspectRatio(_window, 16, 9);
 
   glfwMakeContextCurrent(_window);
   assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) && "failed to initialise glad for some reason ...");

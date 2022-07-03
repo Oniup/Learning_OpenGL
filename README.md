@@ -7,10 +7,12 @@ from https://learnopengl.com
 
 # Version History
 
+
 * ***(3/07/2022)***
   * Implemented specular
   * Implemented the Gouraud version of the shader
   * Moved the ImGui Window for Control outside of the Light part of the controller so we can add more to it later
+  * Implemented basic material in both Gouraud and Phong Lighting
 * ***(1/07/2022)***
   * Implement diffuse lighting
   * Fixed rendering everything in view space so calculating specular lighting later on will be easier
