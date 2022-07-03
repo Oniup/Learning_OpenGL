@@ -142,21 +142,26 @@ void Application::run()
     light.transform.angle = 0.0f;
 
     light.type = LIGHT_TYPE_POINT;
-    light.colour = glm::vec4(1.0f, 0.9f, 0.9f, 1.0f);
+    light.diffuse = glm::vec3(1.0f, 0.9f, 0.9f);
+    light.specular = glm::vec3(0.0f);
+    light.ambient = glm::vec3(0.0f, 0.1f, 0.1f);
+    light.direction = glm::vec3(0.0f);
     lights.push_back(light);
   }
 
   Light* directional = &lights[0];
   directional->transform.position = glm::vec3(0.0f, 5.0f, 5.0f);
+  directional->direction = glm::vec3(0.5f, 0.5f, 0.5f);
   directional->type = LIGHT_TYPE_DIRECTIONAL;
 
   float ambient_strength = 0.5f;
-  glm::vec4 ambient_colour = glm::vec4(0.0f, 0.05f, 0.1f, 1.0f);
 
   glm::mat4 projection = glm::perspective(
     glm::radians(45.0f), (float)window_width() / (float)window_height(), 
     0.1f, 100.0f
   );
+
+  glm::vec3 ambient_colour = glm::vec3(0.0f);
 
   while (!glfwWindowShouldClose(_window))
   {
@@ -197,6 +202,9 @@ void Application::run()
 
     /*********** RENDERING ***********/
 
+    bool calc_ambient_lighting = true;
+    ambient_colour = glm::vec3(0.0f);
+
     for (int i = 0; i < objects_count; i++)
     { 
       uint32_t u_shininess;     
@@ -236,25 +244,34 @@ void Application::run()
 
       for (int i = 0; i < lights.size(); i++)
       {
+        if (calc_ambient_lighting)
+        {
+          if (lights[i].type == LIGHT_TYPE_DIRECTIONAL)
+            ambient_colour += lights[i].ambient;
+          if (i + 1 == lights.size())
+            calc_ambient_lighting = false;
+        }
+
         std::string name = "u_lights[" + std::to_string(i) + "].";
 
+        uint32_t u_light_type = glGetUniformLocation(shader.id(), std::string(name + "type").c_str());
         uint32_t u_light_position = glGetUniformLocation(shader.id(), std::string(name + "position").c_str());
-        uint32_t u_light_colour = glGetUniformLocation(shader.id(), std::string(name + "colour").c_str());
+        uint32_t u_light_direction = glGetUniformLocation(shader.id(), std::string(name + "direction").c_str());
+        uint32_t u_light_ambient = glGetUniformLocation(shader.id(), std::string(name + "ambient").c_str());
+        uint32_t u_light_diffuse = glGetUniformLocation(shader.id(), std::string(name + "diffuse").c_str());
+        uint32_t u_light_specular = glGetUniformLocation(shader.id(), std::string(name + "specular").c_str());
         uint32_t u_lights_count = glGetUniformLocation(shader.id(), "u_lights_count");
-        uint32_t u_ambient_colour = glGetUniformLocation(shader.id(), "u_ambient_colour");
 
         glm::vec3 position = glm::vec3(view * glm::vec4(lights[i].transform.position, 1.0f));
+        glm::vec3 direction = glm::vec3(glm::transpose(glm::inverse(view)) * glm::vec4(lights[i].direction, 1.0f));
 
-        glUniform3f(u_light_position,
-          position.x, position.y, position.z
-        );
-        glUniform3f(u_light_colour, 
-          lights[i].colour.r, lights[i].colour.g, lights[i].colour.b
-        );
+        glUniform1i(u_light_type, (int)lights[i].type);
+        glUniform3f(u_light_position, position.x, position.y, position.z);
+        glUniform3f(u_light_direction, direction.x, direction.y, direction.z);
+        glUniform3f(u_light_ambient, lights[i].ambient.r, lights[i].ambient.g, lights[i].ambient.b);
+        glUniform3f(u_light_diffuse, lights[i].diffuse.r, lights[i].diffuse.g, lights[i].diffuse.b);
+        glUniform3f(u_light_specular, lights[i].specular.r, lights[i].specular.g, lights[i].specular.b);
         glUniform1i(u_lights_count, lights.size());
-        glUniform4f(u_ambient_colour,
-          ambient_colour.r, ambient_colour.g, ambient_colour.b, ambient_colour.a
-        );
       }
 
       glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -268,7 +285,7 @@ void Application::run()
 
     start_imgui();
     ImGui::Begin("Controller");
-    light_controller_imgui(using_phong_lighting, ambient_colour, lights);
+    light_controller_imgui(using_phong_lighting, lights);
     ImGui::End();
     end_imgui();
 

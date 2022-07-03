@@ -105,8 +105,10 @@ void render_lights(const std::vector<Light>& lights, Shader* shader, const Camer
     uint32_t u_final_matrix = glGetUniformLocation(shader->id(), "u_final_matrix");
     uint32_t u_light_colour = glGetUniformLocation(shader->id(), "u_light_colour");
 
+    glm::vec3 light_colour = light->diffuse + light->specular + light->ambient;
+
     glUniformMatrix4fv(u_final_matrix, 1, GL_FALSE, &final_matrix[0][0]);
-    glUniform3f(u_light_colour, light->colour.r, light->colour.g, light->colour.b);
+    glUniform3f(u_light_colour, light_colour.r, light_colour.g, light_colour.b);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
   }

@@ -1,3 +1,4 @@
+// FIXME: This currently doesn't work in this build, will fix the next day
 #version 450 core
 
 struct Material

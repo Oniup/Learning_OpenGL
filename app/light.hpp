@@ -10,15 +10,19 @@ enum LightType
 {
   LIGHT_TYPE_POINT = 0,
   LIGHT_TYPE_DIRECTIONAL,
-  LIGHT_TYPE_SPOT_LIGHT
+  LIGHT_TYPE_SPOT
 };
 
 struct Light
 {
-  LightType type;
   Transform transform;
-  glm::vec4 colour;
+
+  LightType type;
   glm::vec3 direction;
+
+  glm::vec3 ambient;
+  glm::vec3 diffuse;
+  glm::vec3 specular;
 };
 
 void generate_light_vertex_data();

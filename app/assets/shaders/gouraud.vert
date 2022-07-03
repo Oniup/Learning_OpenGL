@@ -1,3 +1,4 @@
+// FIXME: This currently doesn't work in this build, will fix the next day
 #version 450 core
 
 layout (location = 0) in vec3 a_vertex_pos;

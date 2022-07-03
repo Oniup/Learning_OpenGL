@@ -68,47 +68,41 @@ void end_imgui()
   }
 }
 
-void light_controller_imgui(bool using_phong_lighting, glm::vec4& ambient_colour, std::vector<Light>& lights)
+void light_controller_imgui(bool using_phong_lighting, std::vector<Light>& lights)
 {
   const char* panel_name = using_phong_lighting ? "Phong Lighting Controller" : "Gouraud Lighting Controller";
   if (ImGui::CollapsingHeader(panel_name))
   {
-    ImGui::ColorEdit4("Ambient Colour", &ambient_colour[0]);
-
-    int directional_count = 0;
-    int point_count = 0;
-    int spot_count = 0;
+    ImGui::Indent();
 
     for (int i = 0; i < lights.size(); i++)
-    {      
-      std::string name = "";
+    {
+      std::string name = "Light" + std::to_string(i);
+      std::string title_name = name + ": ";
       switch (lights[i].type)
       {
-        case LIGHT_TYPE_DIRECTIONAL:
-        {
-          directional_count++;
-          name = "Directional Light";
-        }
-          break;
-          
         case LIGHT_TYPE_POINT:
-        {
-          point_count++;
-          name = "Point Light";
-        }
+          title_name += "Point";
           break;
-
-        case LIGHT_TYPE_SPOT_LIGHT:
-        {
-          spot_count++;
-          name = "Spot Light";
-        }
+        case LIGHT_TYPE_DIRECTIONAL:
+          title_name += "Directional";
+          break;
+        case LIGHT_TYPE_SPOT:
+          title_name += "Spot";
           break;
       }
-      
-      name += " " + std::to_string(i);
-      ImGui::Separator();
-      ImGui::ColorEdit4(name.c_str(), &lights[i].colour[0]);
+
+      if (ImGui::CollapsingHeader(title_name.c_str()))
+      {
+        if (lights[i].type == LIGHT_TYPE_DIRECTIONAL)
+          ImGui::ColorEdit3(std::string(name + "ambient").c_str(), &lights[i].ambient[0]);
+        ImGui::ColorEdit3(std::string(name + "diffuse").c_str(), &lights[i].diffuse[0]);
+        ImGui::ColorEdit3(std::string(name + "specular").c_str(), &lights[i].specular[0]);
+        ImGui::Spacing();
+        ImGui::InputFloat3(std::string(name + "position").c_str(), &lights[i].transform.position[0]);
+        if (lights[i].type != LIGHT_TYPE_POINT)        
+          ImGui::InputFloat3(std::string(name + "direction").c_str(), &lights[i].direction[0]);
+      }
     }
   }
 }

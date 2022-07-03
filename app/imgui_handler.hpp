@@ -13,6 +13,6 @@ void terminate_imgui();
 void start_imgui();
 void end_imgui();
 
-void light_controller_imgui(bool using_phong_lighting, glm::vec4& ambient_colour, std::vector<Light>& lights);
+void light_controller_imgui(bool using_phong_lighting, std::vector<Light>& lights);
 
 #endif // __IMGUI_HANDLER_HPP__

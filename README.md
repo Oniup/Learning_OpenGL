@@ -5,14 +5,36 @@ doesn't just involve rendering 2D planes. The knowledge gained from this will be
 
 from https://learnopengl.com
 
-# Version History
+## build
 
+```bash
+~ ❯ git clone https://github.com/Oniup/Learning_OpenGL.git
+~ ❯ cd Learning_OpenGL 
+~/Learning_OpenGL master ❯ mkdir bin
+~/Learning_OpenGL master ❯ cd bin 
+~/Learning_OpenGL/bin master ❯ cmake ../
+```
 
+***if using linux:***
+
+```bash
+~/Learning_OpenGL/bin master ❯ make
+```
+
+***if using windows*** then you will have to open the sln file through visual studio community/pro. Then build using Ctr + b. Then you can find the .exe and run the program
+
+## Version History
+
+* ***(4/07/2022)***
+  * More complex light colours, diffuse, specular and ambient colour values
+  * Directional light implementation
+  * Saved the Latest ImGui config if you want to copy it over when running the program
 * ***(3/07/2022)***
   * Implemented specular
   * Implemented the Gouraud version of the shader
   * Moved the ImGui Window for Control outside of the Light part of the controller so we can add more to it later
   * Implemented basic material in both Gouraud and Phong Lighting
+  * added build instructions in README.md
 * ***(1/07/2022)***
   * Implement diffuse lighting
   * Fixed rendering everything in view space so calculating specular lighting later on will be easier
