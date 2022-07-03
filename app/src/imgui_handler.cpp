@@ -68,10 +68,10 @@ void end_imgui()
   }
 }
 
-void light_controller_imgui(glm::vec4& ambient_colour, std::vector<Light>& lights)
+void light_controller_imgui(bool using_phong_lighting, glm::vec4& ambient_colour, std::vector<Light>& lights)
 {
-  ImGui::Begin("Controller");
-  if (ImGui::CollapsingHeader("Light Control"))
+  const char* panel_name = using_phong_lighting ? "Phong Lighting Controller" : "Gouraud Lighting Controller";
+  if (ImGui::CollapsingHeader(panel_name))
   {
     ImGui::ColorEdit4("Ambient Colour", &ambient_colour[0]);
 
@@ -111,5 +111,4 @@ void light_controller_imgui(glm::vec4& ambient_colour, std::vector<Light>& light
       ImGui::ColorEdit4(name.c_str(), &lights[i].colour[0]);
     }
   }
-  ImGui::End();
 }

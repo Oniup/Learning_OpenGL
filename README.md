@@ -7,11 +7,15 @@ from https://learnopengl.com
 
 # Version History
 
+* ***(3/07/2022)***
+  * Implemented specular
+  * Implemented the Gouraud version of the shader
+  * Moved the ImGui Window for Control outside of the Light part of the controller so we can add more to it later
 * ***(1/07/2022)***
-  * implement diffuse lighting
-  * fixed rendering everything in view space so calculating specular lighting later on will be easier
-  * implemented imgui using the docking branch so you can pull the imgui window out of the main window
-    * can change the colour of the lights with it
+  * Implement diffuse lighting
+  * Fixed rendering everything in view space so calculating specular lighting later on will be easier
+  * Implemented imgui using the docking branch so you can pull the imgui window out of the main window
+    * Can change the colour of the lights with it
 * ***(28/06/2022)***
   * Added a floor
   * Updated the textures so that they have a specular and diffuse textures

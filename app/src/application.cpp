@@ -40,9 +40,9 @@ Application::~Application()
 
 void Application::run()
 {
-  // glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-  Shader shader("app/assets/shaders/basic.vert", "app/assets/shaders/basic.frag");
+  bool using_phong_lighting = true;
+  Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
+  // Shader shader("app/assets/shaders/gouraud.vert", "app/assets/shaders/gouraud.frag");
   Shader light_shader("app/assets/shaders/light.vert", "app/assets/shaders/light.frag");
 
   Texture crate_texture("app/assets/images/crate.png", false);
@@ -50,8 +50,6 @@ void Application::run()
 
   Texture floor_texture("app/assets/images/floor.png", false);
   Texture floor_specular_texture("app/assets/images/floor_specular.png", false);
-
-
 
   float vertices[] = {
   // vertex data          uv           normals
@@ -125,11 +123,15 @@ void Application::run()
   objects[0].scale = glm::vec3(1.0f, 1.0f, 1.0f);
   objects[0].rotation = glm::vec3(1.0f, 0.0f, 1.0f);
   objects[0].angle = 0.0f;
+  float object_0_specular_strength = 0.5f;
+  int object_0_shininess = 32;
 
   objects[1].position = glm::vec3(0.0f, -3.0f, 0.0f);
   objects[1].scale = glm::vec3(5.0f, 0.2f, 5.0f);
   objects[1].rotation = glm::vec3(0.0f, 0.0f, 1.0f);
   objects[1].angle = 0.0f;
+  float object_1_specular_strength = 1.0f;
+  int object_1_shininess = 12;
 
   static const int light_count = 2;
   std::vector<Light> lights;
@@ -199,10 +201,20 @@ void Application::run()
 
     for (int i = 0; i < objects_count; i++)
     {
+      uint32_t u_specular_strength = glGetUniformLocation(shader.id(), "u_specular_strength");
+      uint32_t u_shininess = glGetUniformLocation(shader.id(), "u_shininess");
       if (i == 0)
+      {
         crate_texture.bind(0);
+        glUniform1f(u_specular_strength, object_0_specular_strength);
+        glUniform1i(u_shininess, object_0_shininess);
+      }
       else
+      {
         floor_texture.bind(0);
+        glUniform1f(u_specular_strength, object_1_specular_strength);
+        glUniform1i(u_shininess, object_1_shininess);
+      }
 
       glm::mat4 model = glm::mat4(1.0f);
       model = glm::translate(model, objects[i].position);
@@ -252,7 +264,9 @@ void Application::run()
     render_lights(lights, &light_shader, &camera, projection, view);
 
     start_imgui();
-    light_controller_imgui(ambient_colour, lights);
+    ImGui::Begin("Controller");
+    light_controller_imgui(using_phong_lighting, ambient_colour, lights);
+    ImGui::End();
     end_imgui();
 
     // ImGui Window Panel Stuff
