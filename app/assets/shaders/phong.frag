@@ -48,7 +48,6 @@ void main()
 vec4 calc_lighting()
 {
   vec3 light_colour = vec3(0.0);
-  vec3 ambient_light = vec3(0.0);
   for (int i = 0; i < u_lights_count; i++)
   {
     vec3 light_direction = get_light_direction(u_lights[i], frag_position);
@@ -57,10 +56,10 @@ vec4 calc_lighting()
     light_colour += diffuse + specular;
 
     if (u_lights[i].type == LIGHT_TYPE_DIRECTIONAL)
-      ambient_light += u_lights[i].ambient;
+      light_colour += u_lights[i].ambient;
   }
 
-  return vec4(ambient_light.rgb + light_colour.rgb, 1.0);
+  return vec4(light_colour.rgb, 1.0);
 }
 
 vec3 calc_diffuse(Light light, vec3 light_direction)

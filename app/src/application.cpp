@@ -40,9 +40,9 @@ Application::~Application()
 
 void Application::run()
 {
-  bool using_phong_lighting = true;
-  Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
-  // Shader shader("app/assets/shaders/gouraud.vert", "app/assets/shaders/gouraud.frag");
+  bool using_phong_lighting = false;
+  // Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
+  Shader shader("app/assets/shaders/gouraud.vert", "app/assets/shaders/gouraud.frag");
   Shader light_shader("app/assets/shaders/light.vert", "app/assets/shaders/light.frag");
 
   Texture crate_texture("app/assets/images/crate.png", false);
@@ -263,6 +263,10 @@ void Application::run()
         uint32_t u_lights_count = glGetUniformLocation(shader.id(), "u_lights_count");
 
         glm::vec3 position = glm::vec3(view * glm::vec4(lights[i].transform.position, 1.0f));
+        
+        // tbh I have no idea why I have to transpose and inverse the view matrix for directional light to work
+        // thought I would have just needed to multiple it by the view matrix without any changes, also
+        // this really should be calculated every single light lmao
         glm::vec3 direction = glm::vec3(glm::transpose(glm::inverse(view)) * glm::vec4(lights[i].direction, 1.0f));
 
         glUniform1i(u_light_type, (int)lights[i].type);

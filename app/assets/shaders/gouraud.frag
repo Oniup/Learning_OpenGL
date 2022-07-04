@@ -12,6 +12,7 @@ out vec4 frag_colour;
 in vec2 uv;
 in vec3 diffuse_lighting;
 in vec3 specular_lighting;
+in vec3 ambient_lighting;
 
 uniform Material u_material;
 uniform int u_lights_count;
@@ -25,5 +26,5 @@ void main()
   vec3 light_colour = u_ambient_colour.rgb * u_ambient_colour.a;
   light_colour += diffuse + specular;
 
-  frag_colour = vec4(light_colour.rgb, 1.0);
+  frag_colour = vec4(ambient_lighting.rgb + light_colour.rgb, 1.0);
 }
