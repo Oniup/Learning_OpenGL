@@ -15,6 +15,10 @@ struct Light
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
+
+  float constant;
+  float linear;
+  float quadratic;
 };
 
 struct Material
@@ -50,13 +54,25 @@ vec4 calc_lighting()
   vec3 light_colour = vec3(0.0);
   for (int i = 0; i < u_lights_count; i++)
   {
-    vec3 light_direction = get_light_direction(u_lights[i], frag_position);
-    vec3 diffuse = calc_diffuse(u_lights[i], light_direction);
-    vec3 specular = calc_specular(u_lights[i], light_direction);
-    light_colour += diffuse + specular;
+    Light light = u_lights[i];
+    vec3 light_direction = get_light_direction(light, frag_position);    
 
-    if (u_lights[i].type == LIGHT_TYPE_DIRECTIONAL)
-      light_colour += u_lights[i].ambient;
+    vec3 diffuse = calc_diffuse(light, light_direction);
+    vec3 specular = calc_specular(light, light_direction);
+    vec3 ambient = light.ambient;
+    
+    if (light.type != LIGHT_TYPE_DIRECTIONAL)
+    {
+      float light_distance = length(light.position - frag_position);
+      float attenuation = 1.0 / (light.constant + light.linear * light_distance + 
+    		    light.quadratic * (light_distance * light_distance)); 
+      
+      diffuse   *= attenuation;
+      specular  *= attenuation;
+      ambient   *= attenuation;
+    }
+
+    light_colour += ambient + diffuse + specular;
   }
 
   return vec4(light_colour.rgb, 1.0);

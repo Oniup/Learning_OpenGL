@@ -29,6 +29,7 @@ from https://learnopengl.com
   * More complex light colours, diffuse, specular and ambient colour values
   * Directional light implementation
   * Saved the Latest ImGui config if you want to copy it over when running the program
+  * Added light attenuation
 * ***(3/07/2022)***
   * Implemented specular
   * Implemented the Gouraud version of the shader

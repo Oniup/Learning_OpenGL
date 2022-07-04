@@ -40,9 +40,9 @@ Application::~Application()
 
 void Application::run()
 {
-  bool using_phong_lighting = false;
-  // Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
-  Shader shader("app/assets/shaders/gouraud.vert", "app/assets/shaders/gouraud.frag");
+  bool using_phong_lighting = true;
+  Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
+  // Shader shader("app/assets/shaders/gouraud.vert", "app/assets/shaders/gouraud.frag");
   Shader light_shader("app/assets/shaders/light.vert", "app/assets/shaders/light.frag");
 
   Texture crate_texture("app/assets/images/crate.png", false);
@@ -131,9 +131,8 @@ void Application::run()
   objects[1].angle = 0.0f;
   int object_1_shininess = 32;
 
-  static const int light_count = 2;
   std::vector<Light> lights;
-  for (int i = 0; i < 2; i++)
+  for (int i = 0; i < 3; i++)
   {
     Light light;
     light.transform.position = glm::vec3(0.0f, 3.0f, 3.0f);
@@ -146,6 +145,11 @@ void Application::run()
     light.specular = glm::vec3(0.0f);
     light.ambient = glm::vec3(0.0f, 0.1f, 0.1f);
     light.direction = glm::vec3(0.0f);
+
+    light.constant = 1.0f;
+    light.linear = 0.09f;
+    light.quadratic = 0.032f;
+
     lights.push_back(light);
   }
 
@@ -154,7 +158,8 @@ void Application::run()
   directional->direction = glm::vec3(0.5f, 0.5f, 0.5f);
   directional->type = LIGHT_TYPE_DIRECTIONAL;
 
-  float ambient_strength = 0.5f;
+  Light* camera_light = &lights[lights.size() - 1];
+  camera_light->transform.scale = glm::vec3(0.0f, 0.0f, 0.0f);
 
   glm::mat4 projection = glm::perspective(
     glm::radians(45.0f), (float)window_width() / (float)window_height(), 
@@ -199,6 +204,8 @@ void Application::run()
     rotate_light_around_target(&lights[1], objects[0], 10.0f);
 
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.up);
+
+    camera_light->transform.position = camera.position;
 
     /*********** RENDERING ***********/
 
@@ -260,6 +267,9 @@ void Application::run()
         uint32_t u_light_ambient = glGetUniformLocation(shader.id(), std::string(name + "ambient").c_str());
         uint32_t u_light_diffuse = glGetUniformLocation(shader.id(), std::string(name + "diffuse").c_str());
         uint32_t u_light_specular = glGetUniformLocation(shader.id(), std::string(name + "specular").c_str());
+        uint32_t u_light_constant = glGetUniformLocation(shader.id(), std::string(name + "constant").c_str());
+        uint32_t u_light_linear = glGetUniformLocation(shader.id(), std::string(name + "linear").c_str());
+        uint32_t u_light_quadratic = glGetUniformLocation(shader.id(), std::string(name + "quadratic").c_str());
         uint32_t u_lights_count = glGetUniformLocation(shader.id(), "u_lights_count");
 
         glm::vec3 position = glm::vec3(view * glm::vec4(lights[i].transform.position, 1.0f));
@@ -275,6 +285,9 @@ void Application::run()
         glUniform3f(u_light_ambient, lights[i].ambient.r, lights[i].ambient.g, lights[i].ambient.b);
         glUniform3f(u_light_diffuse, lights[i].diffuse.r, lights[i].diffuse.g, lights[i].diffuse.b);
         glUniform3f(u_light_specular, lights[i].specular.r, lights[i].specular.g, lights[i].specular.b);
+        glUniform1f(u_light_constant, lights[i].constant);
+        glUniform1f(u_light_linear, lights[i].linear);
+        glUniform1i(u_light_quadratic, lights[i].quadratic);
         glUniform1i(u_lights_count, lights.size());
       }
 

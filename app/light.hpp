@@ -23,6 +23,10 @@ struct Light
   glm::vec3 ambient;
   glm::vec3 diffuse;
   glm::vec3 specular;
+
+  float constant;
+  float linear;
+  float quadratic;
 };
 
 void generate_light_vertex_data();

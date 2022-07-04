@@ -94,8 +94,7 @@ void light_controller_imgui(bool using_phong_lighting, std::vector<Light>& light
 
       if (ImGui::CollapsingHeader(title_name.c_str()))
       {
-        if (lights[i].type == LIGHT_TYPE_DIRECTIONAL)
-          ImGui::ColorEdit3(std::string(name + "ambient").c_str(), &lights[i].ambient[0]);
+        ImGui::ColorEdit3(std::string(name + "ambient").c_str(), &lights[i].ambient[0]);
         ImGui::ColorEdit3(std::string(name + "diffuse").c_str(), &lights[i].diffuse[0]);
         ImGui::ColorEdit3(std::string(name + "specular").c_str(), &lights[i].specular[0]);
         ImGui::Spacing();
