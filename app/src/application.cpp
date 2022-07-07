@@ -159,14 +159,19 @@ void Application::run()
   directional->type = LIGHT_TYPE_DIRECTIONAL;
 
   Light* camera_light = &lights[lights.size() - 1];
+  camera_light->type = LIGHT_TYPE_SPOT;
   camera_light->transform.scale = glm::vec3(0.0f, 0.0f, 0.0f);
+  camera_light->spot_start_fade = 12.5f;
+  camera_light->spot_cutoff = 17.5f;
 
   glm::mat4 projection = glm::perspective(
     glm::radians(45.0f), (float)window_width() / (float)window_height(), 
     0.1f, 100.0f
   );
 
-  glm::vec3 ambient_colour = glm::vec3(0.0f);
+  float light_radius = 10.0f;
+
+  glm::vec3 ambient_colour = glm::vec3(0.0f, 0.1f, 0.1f);
 
   while (!glfwWindowShouldClose(_window))
   {
@@ -201,16 +206,14 @@ void Application::run()
       objects[0].angle = 0.0f;
 
     _camera_controller(camera, delta_time);
-    rotate_light_around_target(&lights[1], objects[0], 10.0f);
+    rotate_light_around_target(&lights[1], objects[0], light_radius);
 
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.up);
 
     camera_light->transform.position = camera.position;
+    camera_light->direction = camera.forward;
 
     /*********** RENDERING ***********/
-
-    bool calc_ambient_lighting = true;
-    ambient_colour = glm::vec3(0.0f);
 
     for (int i = 0; i < objects_count; i++)
     { 
@@ -251,14 +254,6 @@ void Application::run()
 
       for (int i = 0; i < lights.size(); i++)
       {
-        if (calc_ambient_lighting)
-        {
-          if (lights[i].type == LIGHT_TYPE_DIRECTIONAL)
-            ambient_colour += lights[i].ambient;
-          if (i + 1 == lights.size())
-            calc_ambient_lighting = false;
-        }
-
         std::string name = "u_lights[" + std::to_string(i) + "].";
 
         uint32_t u_light_type = glGetUniformLocation(shader.id(), std::string(name + "type").c_str());
@@ -270,6 +265,8 @@ void Application::run()
         uint32_t u_light_constant = glGetUniformLocation(shader.id(), std::string(name + "constant").c_str());
         uint32_t u_light_linear = glGetUniformLocation(shader.id(), std::string(name + "linear").c_str());
         uint32_t u_light_quadratic = glGetUniformLocation(shader.id(), std::string(name + "quadratic").c_str());
+        uint32_t u_light_spot_start_fade = glGetUniformLocation(shader.id(), std::string(name + "spot_start_fade").c_str());
+        uint32_t u_light_spot_cutoff = glGetUniformLocation(shader.id(), std::string(name + "spot_cutoff").c_str());
         uint32_t u_lights_count = glGetUniformLocation(shader.id(), "u_lights_count");
 
         glm::vec3 position = glm::vec3(view * glm::vec4(lights[i].transform.position, 1.0f));
@@ -288,6 +285,8 @@ void Application::run()
         glUniform1f(u_light_constant, lights[i].constant);
         glUniform1f(u_light_linear, lights[i].linear);
         glUniform1i(u_light_quadratic, lights[i].quadratic);
+        glUniform1f(u_light_spot_start_fade, glm::cos(glm::radians(lights[i].spot_start_fade)));
+        glUniform1f(u_light_spot_cutoff, glm::cos(glm::radians(lights[i].spot_cutoff)));
         glUniform1i(u_lights_count, lights.size());
       }
 
@@ -302,7 +301,7 @@ void Application::run()
 
     start_imgui();
     ImGui::Begin("Controller");
-    light_controller_imgui(using_phong_lighting, lights);
+    light_controller_imgui(using_phong_lighting, lights, ambient_colour, &light_radius);
     ImGui::End();
     end_imgui();
 

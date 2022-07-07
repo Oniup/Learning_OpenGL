@@ -68,12 +68,15 @@ void end_imgui()
   }
 }
 
-void light_controller_imgui(bool using_phong_lighting, std::vector<Light>& lights)
+void light_controller_imgui(bool using_phong_lighting, std::vector<Light>& lights, glm::vec3& ambient_colour, float* radius)
 {
   const char* panel_name = using_phong_lighting ? "Phong Lighting Controller" : "Gouraud Lighting Controller";
   if (ImGui::CollapsingHeader(panel_name))
   {
     ImGui::Indent();
+
+    ImGui::ColorEdit3("World Ambient Colour", &ambient_colour[0]);
+    ImGui::InputFloat("Spinning Light Radius", radius);
 
     for (int i = 0; i < lights.size(); i++)
     {
@@ -101,6 +104,8 @@ void light_controller_imgui(bool using_phong_lighting, std::vector<Light>& light
         ImGui::InputFloat3(std::string(name + "position").c_str(), &lights[i].transform.position[0]);
         if (lights[i].type != LIGHT_TYPE_POINT)        
           ImGui::InputFloat3(std::string(name + "direction").c_str(), &lights[i].direction[0]);
+        if (lights[i].type == LIGHT_TYPE_SPOT)
+          ImGui::InputFloat(std::string(name + "cut off").c_str(), &lights[i].spot_cutoff);
       }
     }
   }

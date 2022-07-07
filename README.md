@@ -25,18 +25,20 @@ from https://learnopengl.com
 
 ## Version History
 
-* ***(4/07/2022)***
+* ***(07/07/2022)***
+  * smooth cutoff of spot lights
+* ***(04/07/2022)***
   * More complex light colours, diffuse, specular and ambient colour values
   * Directional light implementation
   * Saved the Latest ImGui config if you want to copy it over when running the program
   * Added light attenuation
-* ***(3/07/2022)***
+* ***(03/07/2022)***
   * Implemented specular
   * Implemented the Gouraud version of the shader
   * Moved the ImGui Window for Control outside of the Light part of the controller so we can add more to it later
   * Implemented basic material in both Gouraud and Phong Lighting
   * added build instructions in README.md
-* ***(1/07/2022)***
+* ***(01/07/2022)***
   * Implement diffuse lighting
   * Fixed rendering everything in view space so calculating specular lighting later on will be easier
   * Implemented imgui using the docking branch so you can pull the imgui window out of the main window
