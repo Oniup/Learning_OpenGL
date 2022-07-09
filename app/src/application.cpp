@@ -19,6 +19,8 @@
 #include <app/light.hpp>
 #include <app/imgui_handler.hpp>
 
+#include <app/mesh.hpp>
+
 static Camera camera;
 static bool cursor_mode = true;
 
@@ -26,19 +28,19 @@ void mouse_callback(GLFWwindow* window, double x, double y);
 
 Application::Application() : _window(nullptr), _width(1280), _height(720)
 {
-  _init_window();
-  init_imgui(this);
+  _InitWindow();
+  InitImGui(this);
 }
 
 Application::~Application()
 {
-  terminate_imgui();
+  TerminateImGui();
 
   glfwDestroyWindow(_window);
   glfwTerminate();
 }
 
-void Application::run()
+void Application::Run()
 {
   bool using_phong_lighting = true;
   Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
@@ -50,6 +52,8 @@ void Application::run()
 
   Texture floor_texture("app/assets/images/floor.png", false);
   Texture floor_specular_texture("app/assets/images/floor_specular.png", false);
+
+  Mesh mesh;
 
   float vertices[] = {
   // vertex data          uv           normals
@@ -110,7 +114,7 @@ void Application::run()
   glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float) * 5));
   glBindVertexArray(0);
 
-  generate_light_vertex_data();
+  GenerateLightVertexData();
 
   camera.position = glm::vec3(0.0f, 0.0f, 20.0f);
   camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -165,7 +169,7 @@ void Application::run()
   camera_light->spot_cutoff = 17.5f;
 
   glm::mat4 projection = glm::perspective(
-    glm::radians(45.0f), (float)window_width() / (float)window_height(), 
+    glm::radians(45.0f), (float)GetWindowWidth() / (float)GetWindowHeight(), 
     0.1f, 100.0f
   );
 
@@ -191,7 +195,7 @@ void Application::run()
       glfwSetCursorPosCallback(_window, mouse_callback);
     }
 
-    shader.bind();
+    shader.Bind();
     glBindVertexArray(vao);
 
     /************ UPDATING ***********/    
@@ -205,8 +209,8 @@ void Application::run()
     if (objects[0].angle > 360.0f)
       objects[0].angle = 0.0f;
 
-    _camera_controller(camera, delta_time);
-    rotate_light_around_target(&lights[1], objects[0], light_radius);
+    _CameraController(camera, delta_time);
+    RotateLightAroundTarget(&lights[1], objects[0], light_radius);
 
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.up);
 
@@ -224,14 +228,14 @@ void Application::run()
         u_shininess = glGetUniformLocation(shader.id(), "u_shininess");
       if (i == 0)
       {
-        crate_texture.bind(0);
-        crate_specular_texture.bind(1);
+        crate_texture.Bind(0);
+        crate_specular_texture.Bind(1);
         glUniform1i(u_shininess, object_0_shininess);
       }
       else
       {
-        floor_texture.bind(0);
-        floor_specular_texture.bind(1);
+        floor_texture.Bind(0);
+        floor_specular_texture.Bind(1);
         glUniform1i(u_shininess, object_1_shininess);
       }
 
@@ -292,36 +296,36 @@ void Application::run()
 
       glDrawArrays(GL_TRIANGLES, 0, 36);
 
-      crate_texture.unbind();
+      crate_texture.Unbind();
     }
-    shader.unbind();
+    shader.Unbind();
     glBindVertexArray(0);
 
-    render_lights(lights, &light_shader, &camera, projection, view);
+    RenderLights(lights, &light_shader, &camera, projection, view);
 
-    start_imgui();
+    StartImGui();
     ImGui::Begin("Controller");
-    light_controller_imgui(using_phong_lighting, lights, ambient_colour, &light_radius);
+    LightControllerImGui(using_phong_lighting, lights, ambient_colour, &light_radius);
     ImGui::End();
-    end_imgui();
+    EndImGui();
 
     // ImGui Window Panel Stuff
 
     glfwSwapBuffers(_window);
 
     glfwGetFramebufferSize(_window, &_width, &_height);
-    glViewport(0, 0, window_width(), window_height());
+    glViewport(0, 0, GetWindowWidth(), GetWindowHeight());
 
     glfwPollEvents();
   }
 
-  clean_light_vertex_data();
+  CleanLightVertexData();
 
   glDeleteBuffers(1, &vbo);
   glDeleteVertexArrays(1, &vao);
 }
 
-void Application::_init_window()
+void Application::_InitWindow()
 {
   assert(glfwInit() && "failed to initialise glfw for some reason ...");
 
@@ -334,7 +338,7 @@ void Application::_init_window()
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif // __APPLE__
 
-  _window = glfwCreateWindow(window_width(), window_height(), "OpenGL Window", nullptr, nullptr);
+  _window = glfwCreateWindow(GetWindowWidth(), GetWindowHeight(), "OpenGL Window", nullptr, nullptr);
   assert(_window && "failed to initialise window for some reason ...");
 
   glfwSetWindowAspectRatio(_window, 16, 9);
@@ -342,13 +346,13 @@ void Application::_init_window()
   glfwMakeContextCurrent(_window);
   assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) && "failed to initialise glad for some reason ...");
 
-  glViewport(0, 0, window_width(), window_height());
+  glViewport(0, 0, GetWindowWidth(), GetWindowHeight());
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_DEPTH_TEST);
 }
 
-void Application::_camera_controller(Camera& camera, float delta_time)
+void Application::_CameraController(Camera& camera, float delta_time)
 {
   float move_speed = 5.0f;
   if (glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)

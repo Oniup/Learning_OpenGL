@@ -11,7 +11,7 @@
 
 static uint32_t vao, vbo;
 
-void generate_light_vertex_data()
+void GenerateLightVertexData()
 {
   float vertices[] = {
     -0.5f, -0.5f, -0.5f,
@@ -69,13 +69,13 @@ void generate_light_vertex_data()
 
 }
 
-void clean_light_vertex_data()
+void CleanLightVertexData()
 {
   glDeleteBuffers(1, &vbo);
   glDeleteVertexArrays(1, &vao);
 }
 
-void rotate_light_around_target(Light* light, const Transform& target, float radius)
+void RotateLightAroundTarget(Light* light, const Transform& target, float radius)
 {
   float time = (float)glfwGetTime();
 
@@ -86,10 +86,10 @@ void rotate_light_around_target(Light* light, const Transform& target, float rad
   );
 }
 
-void render_lights(const std::vector<Light>& lights, Shader* shader, const Camera* camera, const glm::mat4& projection, const glm::mat4& view)
+void RenderLights(const std::vector<Light>& lights, Shader* shader, const Camera* camera, const glm::mat4& projection, const glm::mat4& view)
 {
   glBindVertexArray(vao);
-  shader->bind();
+  shader->Bind();
   glm::mat4 projection_view = projection * view;
   for (int i = 0; i < lights.size(); i++)
   {
@@ -112,6 +112,6 @@ void render_lights(const std::vector<Light>& lights, Shader* shader, const Camer
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
   }
-  shader->unbind();
+  shader->Unbind();
   glBindVertexArray(0);
 }

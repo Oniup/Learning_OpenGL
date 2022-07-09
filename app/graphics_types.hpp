@@ -12,8 +12,8 @@ public:
 public:
   inline const uint32_t id() const { return _id; }
   
-  void bind();
-  void unbind();
+  void Bind();
+  void Unbind();
 
 private:
   uint32_t _id;
@@ -30,8 +30,8 @@ public:
   inline const int width() const { return _width; }
   inline const int height() const { return _height; }
 
-  void bind(const int offset);
-  void unbind();
+  void Bind(const int offset);
+  void Unbind();
 
 private:
   uint32_t _id;

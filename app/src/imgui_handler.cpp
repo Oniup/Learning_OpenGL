@@ -16,7 +16,7 @@
 
 static Application* current_app = nullptr;
 
-void init_imgui(Application* app)
+void InitImGui(Application* app)
 {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -30,29 +30,29 @@ void init_imgui(Application* app)
 
   current_app = app;
 
-  ImGui_ImplGlfw_InitForOpenGL(current_app->native_window(), true);
+  ImGui_ImplGlfw_InitForOpenGL(current_app->GetNativeWindow(), true);
   ImGui_ImplOpenGL3_Init("#version 450");
 }
 
-void terminate_imgui()
+void TerminateImGui()
 {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 }
 
-void start_imgui()
+void StartImGui()
 {
   ImGui_ImplGlfw_NewFrame();
   ImGui_ImplOpenGL3_NewFrame();
   ImGui::NewFrame();
 }
 
-void end_imgui()
+void EndImGui()
 {
   ImGuiIO& io = ImGui::GetIO();
   int width, height;
-  glfwGetFramebufferSize(current_app->native_window(), &width, &height);
+  glfwGetFramebufferSize(current_app->GetNativeWindow(), &width, &height);
   io.DisplaySize = ImVec2(width, height);
   
   ImGui::Render();
@@ -60,7 +60,7 @@ void end_imgui()
   
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
-    GLFWwindow* backup_window = current_app->native_window();
+    GLFWwindow* backup_window = current_app->GetNativeWindow();
 
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
@@ -68,7 +68,7 @@ void end_imgui()
   }
 }
 
-void light_controller_imgui(bool using_phong_lighting, std::vector<Light>& lights, glm::vec3& ambient_colour, float* radius)
+void LightControllerImGui(bool using_phong_lighting, std::vector<Light>& lights, glm::vec3& ambient_colour, float* radius)
 {
   const char* panel_name = using_phong_lighting ? "Phong Lighting Controller" : "Gouraud Lighting Controller";
   if (ImGui::CollapsingHeader(panel_name))

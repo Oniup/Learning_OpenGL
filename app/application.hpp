@@ -6,26 +6,25 @@
 
 typedef struct GLFWwindow GLFWwindow;
 
-
 class Application
 {
 public:
-  inline const int window_width() const { return _width; }
-  inline const int window_height() const { return _height; }
+  inline const int GetWindowWidth() const { return _width; }
+  inline const int GetWindowHeight() const { return _height; }
 
-  inline GLFWwindow* native_window() { return _window; }
-  inline const GLFWwindow* native_window() const { return _window; }
+  inline GLFWwindow* GetNativeWindow() { return _window; }
+  inline const GLFWwindow* GetNativeWindow() const { return _window; }
 
 public:
   Application();
   ~Application();
 
 public:
-  void run();
+  void Run();
 
 private:
-  void _init_window();
-  void _camera_controller(Camera& camera, float delta_time);
+  void _InitWindow();
+  void _CameraController(Camera& camera, float delta_time);
 
 private:
   GLFWwindow* _window;  

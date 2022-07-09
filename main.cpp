@@ -3,6 +3,6 @@
 int main(int argc, char** argv)
 {
   Application app;
-  app.run();
+  app.Run();
   return 0;
 }

@@ -32,9 +32,9 @@ struct Light
   float spot_cutoff;
 };
 
-void generate_light_vertex_data();
-void clean_light_vertex_data();
-void rotate_light_around_target(Light* light, const Transform& target, float radius);
-void render_lights(const std::vector<Light>& lights, Shader* shader, const Camera* camera, const glm::mat4& projection, const glm::mat4& view);
+void GenerateLightVertexData();
+void CleanLightVertexData();
+void RotateLightAroundTarget(Light* light, const Transform& target, float radius);
+void RenderLights(const std::vector<Light>& lights, Shader* shader, const Camera* camera, const glm::mat4& projection, const glm::mat4& view);
 
 #endif // __LIGHT_HPP__

@@ -82,12 +82,12 @@ Shader::~Shader()
   _id = 0;
 }
 
-void Shader::bind()
+void Shader::Bind()
 {
   glUseProgram(_id);
 }
 
-void Shader::unbind()
+void Shader::Unbind()
 {
   glUseProgram(0);
 }
@@ -137,13 +137,13 @@ Texture::~Texture()
 
 }
 
-void Texture::bind(const int offset)
+void Texture::Bind(const int offset)
 {
   glActiveTexture(GL_TEXTURE0 + offset);
   glBindTexture(GL_TEXTURE_2D, _id);
 }
 
-void Texture::unbind()
+void Texture::Unbind()
 {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
