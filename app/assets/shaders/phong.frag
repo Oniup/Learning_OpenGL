@@ -22,9 +22,6 @@ struct Light
 
   float spot_start_fade;
   float spot_cutoff;
-
-  sampler2D light_texture;
-  bool use_light_texture;
 };
 
 struct Material
