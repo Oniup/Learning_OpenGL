@@ -5,9 +5,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include <vector>
-#include <string>
-
 #include <app/graphics_types.hpp>
 
 #include <glad/glad.h>
@@ -18,13 +15,12 @@
 #include <app/transform.hpp>
 #include <app/light.hpp>
 #include <app/imgui_handler.hpp>
-
 #include <app/mesh.hpp>
 
 static Camera camera;
 static bool cursor_mode = true;
 
-void mouse_callback(GLFWwindow* window, double x, double y);
+void MouseCallback(GLFWwindow* window, double x, double y);
 
 Application::Application() : _window(nullptr), _width(1280), _height(720)
 {
@@ -42,9 +38,7 @@ Application::~Application()
 
 void Application::Run()
 {
-  bool using_phong_lighting = true;
   Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
-  // Shader shader("app/assets/shaders/gouraud.vert", "app/assets/shaders/gouraud.frag");
   Shader light_shader("app/assets/shaders/light.vert", "app/assets/shaders/light.frag");
 
   Texture crate_texture("app/assets/images/crate.png", false);
@@ -53,87 +47,17 @@ void Application::Run()
   Texture floor_texture("app/assets/images/floor.png", false);
   Texture floor_specular_texture("app/assets/images/floor_specular.png", false);
 
-  Mesh mesh;
-
-  float vertices[] = {
-  // vertex data          uv           normals
-    -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,  1.0f, 0.0f,  0.0f,  0.0f, -1.0f, 
-     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,  0.0f,  0.0f, -1.0f, 
-     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,  0.0f,  0.0f, -1.0f, 
-    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 
-    -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f, 
-
-    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,  0.0f,  0.0f,  1.0f,
-     1.0f, -1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  0.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,  0.0f, 1.0f,  0.0f,  0.0f,  1.0f,
-    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,  0.0f,  0.0f,  1.0f,
-
-    -1.0f,  1.0f,  1.0f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-    -1.0f,  1.0f, -1.0f,  1.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-    -1.0f,  1.0f,  1.0f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-
-     1.0f,  1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f,  0.0f,
-     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  0.0f,  0.0f,
-     1.0f, -1.0f, -1.0f,  0.0f, 1.0f,  1.0f,  0.0f,  0.0f,
-     1.0f, -1.0f, -1.0f,  0.0f, 1.0f,  1.0f,  0.0f,  0.0f,
-     1.0f, -1.0f,  1.0f,  0.0f, 0.0f,  1.0f,  0.0f,  0.0f,
-     1.0f,  1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f,  0.0f,
-
-    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f,  0.0f, -1.0f,  0.0f,
-     1.0f, -1.0f, -1.0f,  1.0f, 1.0f,  0.0f, -1.0f,  0.0f,
-     1.0f, -1.0f,  1.0f,  1.0f, 0.0f,  0.0f, -1.0f,  0.0f,
-     1.0f, -1.0f,  1.0f,  1.0f, 0.0f,  0.0f, -1.0f,  0.0f,
-    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,  0.0f, -1.0f,  0.0f,
-    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f,  0.0f, -1.0f,  0.0f,
-
-    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,  0.0f,  1.0f,  0.0f,
-     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,  0.0f,  1.0f,  0.0f,
-     1.0f,  1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
-     1.0f,  1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
-    -1.0f,  1.0f,  1.0f,  0.0f, 0.0f,  0.0f,  1.0f,  0.0f,
-    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,  0.0f,  1.0f,  0.0f
-  };
-
-  uint32_t vao, vbo;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0); // vertex position
-  glEnableVertexAttribArray(1); // uv texture coords
-  glEnableVertexAttribArray(2); // normal vectors
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)0);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float) * 3));
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float) * 5));
-  glBindVertexArray(0);
+  Transform cube_transform = {};
+  cube_transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
+  cube_transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
+  cube_transform.rotation = glm::vec3(0.0f, 0.0f, 1.0f);
+  Mesh* cube_mesh = _GenerateCubeMesh({ &crate_texture, &crate_specular_texture }, 1);
 
   GenerateLightVertexData();
 
   camera.position = glm::vec3(0.0f, 0.0f, 20.0f);
   camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
   camera.forward = glm::vec3(0.0f, 0.0f, -1.0f);
-
-  static const int objects_count = 2;
-  Transform objects[objects_count];
-
-  objects[0].position = glm::vec3(0.0f, 0.0f, 0.0f);
-  objects[0].scale = glm::vec3(1.0f, 1.0f, 1.0f);
-  objects[0].rotation = glm::vec3(1.0f, 0.0f, 1.0f);
-  objects[0].angle = 0.0f;
-  int object_0_shininess = 32;
-
-  objects[1].position = glm::vec3(0.0f, -3.0f, 0.0f);
-  objects[1].scale = glm::vec3(5.0f, 0.2f, 5.0f);
-  objects[1].rotation = glm::vec3(0.0f, 0.0f, 1.0f);
-  objects[1].angle = 0.0f;
-  int object_1_shininess = 32;
 
   std::vector<Light> lights;
   for (int i = 0; i < 3; i++)
@@ -192,11 +116,8 @@ void Application::Run()
     {
       cursor_mode = false;
       glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-      glfwSetCursorPosCallback(_window, mouse_callback);
+      glfwSetCursorPosCallback(_window, MouseCallback);
     }
-
-    shader.Bind();
-    glBindVertexArray(vao);
 
     /************ UPDATING ***********/    
 
@@ -205,12 +126,9 @@ void Application::Run()
     float delta_time = time - last_time;
     last_time = time;
 
-    objects[0].angle += delta_time * 20.0f;
-    if (objects[0].angle > 360.0f)
-      objects[0].angle = 0.0f;
 
     _CameraController(camera, delta_time);
-    RotateLightAroundTarget(&lights[1], objects[0], light_radius);
+    RotateLightAroundTarget(&lights[1], cube_transform, light_radius);
 
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.up);
 
@@ -219,93 +137,13 @@ void Application::Run()
 
     /*********** RENDERING ***********/
 
-    for (int i = 0; i < objects_count; i++)
-    { 
-      uint32_t u_shininess;     
-      if (using_phong_lighting)
-        u_shininess = glGetUniformLocation(shader.id(), "u_material.shininess");
-      else
-        u_shininess = glGetUniformLocation(shader.id(), "u_shininess");
-      if (i == 0)
-      {
-        crate_texture.Bind(0);
-        crate_specular_texture.Bind(1);
-        glUniform1i(u_shininess, object_0_shininess);
-      }
-      else
-      {
-        floor_texture.Bind(0);
-        floor_specular_texture.Bind(1);
-        glUniform1i(u_shininess, object_1_shininess);
-      }
-
-      glm::mat4 model = glm::mat4(1.0f);
-      model = glm::translate(model, objects[i].position);
-      model = glm::scale(model, objects[i].scale);
-      model = glm::rotate(model, glm::radians(objects[i].angle), objects[i].rotation);
-
-      glm::mat4 view_model = view * model;
-
-      uint32_t u_projection = glGetUniformLocation(shader.id(), "u_projection");
-      uint32_t u_view_model = glGetUniformLocation(shader.id(), "u_view_model");
-      glUniformMatrix4fv(u_projection, 1, GL_FALSE, &projection[0][0]);
-      glUniformMatrix4fv(u_view_model, 1, GL_FALSE, &view_model[0][0]);
-
-      uint32_t u_material_diffuse = glGetUniformLocation(shader.id(), "u_material.diffuse");
-      uint32_t u_material_specular = glGetUniformLocation(shader.id(), "u_material.specular");
-      glUniform1i(u_material_diffuse, 0);
-      glUniform1i(u_material_specular, 1);
-
-      for (int i = 0; i < lights.size(); i++)
-      {
-        std::string name = "u_lights[" + std::to_string(i) + "].";
-
-        uint32_t u_light_type = glGetUniformLocation(shader.id(), std::string(name + "type").c_str());
-        uint32_t u_light_position = glGetUniformLocation(shader.id(), std::string(name + "position").c_str());
-        uint32_t u_light_direction = glGetUniformLocation(shader.id(), std::string(name + "direction").c_str());
-        uint32_t u_light_ambient = glGetUniformLocation(shader.id(), std::string(name + "ambient").c_str());
-        uint32_t u_light_diffuse = glGetUniformLocation(shader.id(), std::string(name + "diffuse").c_str());
-        uint32_t u_light_specular = glGetUniformLocation(shader.id(), std::string(name + "specular").c_str());
-        uint32_t u_light_constant = glGetUniformLocation(shader.id(), std::string(name + "constant").c_str());
-        uint32_t u_light_linear = glGetUniformLocation(shader.id(), std::string(name + "linear").c_str());
-        uint32_t u_light_quadratic = glGetUniformLocation(shader.id(), std::string(name + "quadratic").c_str());
-        uint32_t u_light_spot_start_fade = glGetUniformLocation(shader.id(), std::string(name + "spot_start_fade").c_str());
-        uint32_t u_light_spot_cutoff = glGetUniformLocation(shader.id(), std::string(name + "spot_cutoff").c_str());
-        uint32_t u_lights_count = glGetUniformLocation(shader.id(), "u_lights_count");
-
-        glm::vec3 position = glm::vec3(view * glm::vec4(lights[i].transform.position, 1.0f));
-        
-        // tbh I have no idea why I have to transpose and inverse the view matrix for directional light to work
-        // thought I would have just needed to multiple it by the view matrix without any changes, also
-        // this really should be calculated every single light lmao
-        glm::vec3 direction = glm::vec3(glm::transpose(glm::inverse(view)) * glm::vec4(lights[i].direction, 1.0f));
-
-        glUniform1i(u_light_type, (int)lights[i].type);
-        glUniform3f(u_light_position, position.x, position.y, position.z);
-        glUniform3f(u_light_direction, direction.x, direction.y, direction.z);
-        glUniform3f(u_light_ambient, lights[i].ambient.r, lights[i].ambient.g, lights[i].ambient.b);
-        glUniform3f(u_light_diffuse, lights[i].diffuse.r, lights[i].diffuse.g, lights[i].diffuse.b);
-        glUniform3f(u_light_specular, lights[i].specular.r, lights[i].specular.g, lights[i].specular.b);
-        glUniform1f(u_light_constant, lights[i].constant);
-        glUniform1f(u_light_linear, lights[i].linear);
-        glUniform1i(u_light_quadratic, lights[i].quadratic);
-        glUniform1f(u_light_spot_start_fade, glm::cos(glm::radians(lights[i].spot_start_fade)));
-        glUniform1f(u_light_spot_cutoff, glm::cos(glm::radians(lights[i].spot_cutoff)));
-        glUniform1i(u_lights_count, lights.size());
-      }
-
-      glDrawArrays(GL_TRIANGLES, 0, 36);
-
-      crate_texture.Unbind();
-    }
-    shader.Unbind();
-    glBindVertexArray(0);
+    cube_mesh->Render(&shader, view, projection, lights, &cube_transform);
 
     RenderLights(lights, &light_shader, &camera, projection, view);
 
     StartImGui();
     ImGui::Begin("Controller");
-    LightControllerImGui(using_phong_lighting, lights, ambient_colour, &light_radius);
+    LightControllerImGui(true, lights, ambient_colour, &light_radius);
     ImGui::End();
     EndImGui();
 
@@ -315,14 +153,17 @@ void Application::Run()
 
     glfwGetFramebufferSize(_window, &_width, &_height);
     glViewport(0, 0, GetWindowWidth(), GetWindowHeight());
+    projection = glm::perspective(
+      glm::radians(45.0f), (float)GetWindowWidth() / (float)GetWindowHeight(), 
+      0.1f, 100.0f
+    );
 
     glfwPollEvents();
   }
 
-  CleanLightVertexData();
+  delete cube_mesh;
 
-  glDeleteBuffers(1, &vbo);
-  glDeleteVertexArrays(1, &vao);
+  CleanLightVertexData();
 }
 
 void Application::_InitWindow()
@@ -375,7 +216,65 @@ void Application::_CameraController(Camera& camera, float delta_time)
     camera.position.y -= move_speed;
 }
 
-void mouse_callback(GLFWwindow* window, double x, double y)
+Mesh* Application::_GenerateCubeMesh(const std::vector<Texture*>& textures, int diffuse_count)
+{
+  std::vector<MeshVertex> vertices = {
+  // vertex position          uvs             normals
+    {{-1.0f, -1.0f,  1.0f},   {0.0f,  0.0f},  { 0.0,  0.0,  1.0}},
+    {{ 1.0f, -1.0f,  1.0f},   {1.0f,  0.0f},  { 0.0,  0.0,  1.0}},
+    {{ 1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  { 0.0,  0.0,  1.0}},
+    {{-1.0f,  1.0f,  1.0f},   {0.0f,  1.0f},  { 0.0,  0.0,  1.0}},
+
+    {{-1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  { 0.0,  0.0, -1.0}},
+    {{-1.0f,  1.0f, -1.0f},   {1.0f,  0.0f},  { 0.0,  0.0, -1.0}},
+    {{ 1.0f,  1.0f, -1.0f},   {1.0f,  1.0f},  { 0.0,  0.0, -1.0}},
+    {{ 1.0f, -1.0f, -1.0f},   {0.0f,  1.0f},  { 0.0,  0.0, -1.0}},
+
+    {{-1.0f,  1.0f, -1.0f},   {0.0f,  0.0f},  { 0.0,  1.0,  0.0}},
+    {{-1.0f,  1.0f,  1.0f},   {1.0f,  0.0f},  { 0.0,  1.0,  0.0}},
+    {{ 1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  { 0.0,  1.0,  0.0}},
+    {{ 1.0f,  1.0f, -1.0f},   {0.0f,  1.0f},  { 0.0,  1.0,  0.0}},
+
+    {{-1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  { 0.0, -1.0,  0.0}},
+    {{ 1.0f, -1.0f, -1.0f},   {1.0f,  0.0f},  { 0.0, -1.0,  0.0}},
+    {{ 1.0f, -1.0f,  1.0f},   {1.0f,  1.0f},  { 0.0, -1.0,  0.0}},
+    {{-1.0f, -1.0f,  1.0f},   {0.0f,  1.0f},  { 0.0, -1.0,  0.0}},
+
+    {{ 1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  { 1.0,  0.0,  0.0}},
+    {{ 1.0f,  1.0f, -1.0f},   {1.0f,  0.0f},  { 1.0,  0.0,  0.0}},
+    {{ 1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  { 1.0,  0.0,  0.0}},
+    {{ 1.0f, -1.0f,  1.0f},   {0.0f,  1.0f},  { 1.0,  0.0,  0.0}},
+
+    {{-1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  {-1.0,  0.0,  0.0}},
+    {{-1.0f, -1.0f,  1.0f},   {1.0f,  0.0f},  {-1.0,  0.0,  0.0}},
+    {{-1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  {-1.0,  0.0,  0.0}},
+    {{-1.0f,  1.0f, -1.0f},   {0.0f,  1.0f},  {-1.0,  0.0,  0.0}}
+  };
+
+  std::vector<uint32_t> indices = {
+    0,  1,  2,   0,  2,  3,    // front
+    4,  5,  6,   4,  6,  7,    // back
+    8,  9,  10,  8,  10, 11,   // top
+    12, 13, 14,  12, 14, 15,   // bottom
+    16, 17, 18,  16, 18, 19,   // right
+    20, 21, 22,  20, 22, 23,   // left
+  };
+
+  Material material = {};
+  for (int i = 0; i < textures.size(); i++)
+  {
+    if (i >= diffuse_count)
+      material.specular.push_back(textures[i]);
+    else
+      material.diffuse.push_back(textures[i]);
+  }
+
+  Mesh* mesh = new Mesh(vertices, indices, material);
+  return mesh;
+}
+
+
+void MouseCallback(GLFWwindow* window, double x, double y)
 {
   if (!cursor_mode)
   {

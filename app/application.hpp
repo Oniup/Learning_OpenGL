@@ -1,10 +1,14 @@
 #ifndef __APPLICATION_HPP__
 #define __APPLICATION_HPP__
 
+#include <vector>
+#include <string>
 #include <glm/glm.hpp>
 #include <app/camera.hpp>
 
 typedef struct GLFWwindow GLFWwindow;
+class Mesh;
+class Texture;
 
 class Application
 {
@@ -25,6 +29,7 @@ public:
 private:
   void _InitWindow();
   void _CameraController(Camera& camera, float delta_time);
+  Mesh* _GenerateCubeMesh(const std::vector<Texture*>& textures, int diffuse_count);
 
 private:
   GLFWwindow* _window;  

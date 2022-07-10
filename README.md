@@ -25,8 +25,11 @@ from https://learnopengl.com
 
 ## Version History
 
+* ***(10/07/2022)***
+  * Updated the vertex data for the light to be using a element buffer array
+  * Mesh implementation
 * ***(07/07/2022)***
-  * smooth cutoff of spot lights
+  * Smooth cutoff of spot lights
 * ***(04/07/2022)***
   * More complex light colours, diffuse, specular and ambient colour values
   * Directional light implementation

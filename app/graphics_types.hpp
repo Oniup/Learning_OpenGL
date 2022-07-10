@@ -10,7 +10,7 @@ public:
   ~Shader();
 
 public:
-  inline const uint32_t id() const { return _id; }
+  inline const uint32_t Id() const { return _id; }
   
   void Bind();
   void Unbind();

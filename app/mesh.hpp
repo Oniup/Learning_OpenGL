@@ -26,8 +26,8 @@ enum MeshTextureType
 
 struct Material
 {
-  std::vector<Texture> diffuse;
-  std::vector<Texture> specular;
+  std::vector<Texture*> diffuse;
+  std::vector<Texture*> specular;
   float shininess;
 };
 
