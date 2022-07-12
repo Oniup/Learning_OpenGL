@@ -29,7 +29,7 @@ struct Light
   float quadratic;
 
   float spot_start_fade;
-  float spot_cutoff;
+  float spot_end_fade;
 };
 
 void GenerateLightVertexData();

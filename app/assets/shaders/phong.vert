@@ -20,4 +20,3 @@ void main()
   normal = normalize(mat3(transpose(inverse(u_view_model))) * a_normal);
   frag_position = position.xyz;
 }
-

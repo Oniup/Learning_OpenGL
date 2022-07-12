@@ -13,7 +13,7 @@ public:
   inline const uint32_t Id() const { return _id; }
   
   void Bind();
-  void Unbind();
+  static void Unbind();
 
 private:
   uint32_t _id;
@@ -31,7 +31,7 @@ public:
   inline const int height() const { return _height; }
 
   void Bind(const int offset);
-  void Unbind();
+  static void Unbind();
 
 private:
   uint32_t _id;

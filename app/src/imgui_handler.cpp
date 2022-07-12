@@ -105,7 +105,7 @@ void LightControllerImGui(bool using_phong_lighting, std::vector<Light>& lights,
         if (lights[i].type != LIGHT_TYPE_POINT)        
           ImGui::InputFloat3(std::string(name + "direction").c_str(), &lights[i].direction[0]);
         if (lights[i].type == LIGHT_TYPE_SPOT)
-          ImGui::InputFloat(std::string(name + "cut off").c_str(), &lights[i].spot_cutoff);
+          ImGui::InputFloat(std::string(name + "cut off").c_str(), &lights[i].spot_end_fade);
       }
     }
   }

@@ -92,6 +92,7 @@ void RenderLights(const std::vector<Light>& lights, Shader* shader, const Camera
   glBindVertexArray(_s_vao);
   shader->Bind();
   glm::mat4 projection_view = projection * view;
+  
   for (int i = 0; i < lights.size(); i++)
   {
     const Light* light = &lights[i];
@@ -113,6 +114,7 @@ void RenderLights(const std::vector<Light>& lights, Shader* shader, const Camera
 
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void*)0);
   }
-  shader->Unbind();
+
+  Shader::Unbind();
   glBindVertexArray(0);
 }

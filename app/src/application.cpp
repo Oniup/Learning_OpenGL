@@ -48,10 +48,16 @@ void Application::Run()
   Texture floor_specular_texture("app/assets/images/floor_specular.png", false);
 
   Transform cube_transform = {};
-  cube_transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
   cube_transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
-  cube_transform.rotation = glm::vec3(0.0f, 0.0f, 1.0f);
-  Mesh* cube_mesh = _GenerateCubeMesh({ &crate_texture, &crate_specular_texture }, 1);
+  cube_transform.rotation = glm::vec3(0.0f, 1.0f, 1.0f);
+
+  Transform floor_transform = {};
+  floor_transform.position = glm::vec3(0.0f, -3.0f, 0.0f);
+  floor_transform.scale = glm::vec3(5.0f, 0.2f, 5.0f);
+  floor_transform.rotation = glm::vec3(0.0f, 0.0f, 1.0f);
+
+  Mesh* cube_mesh = Mesh::GenerateCube(&crate_texture, &crate_specular_texture, 16);
+  Mesh* floor_mesh = Mesh::GenerateCube(&floor_texture, &floor_specular_texture, 32);
 
   GenerateLightVertexData();
 
@@ -90,14 +96,14 @@ void Application::Run()
   camera_light->type = LIGHT_TYPE_SPOT;
   camera_light->transform.scale = glm::vec3(0.0f, 0.0f, 0.0f);
   camera_light->spot_start_fade = 12.5f;
-  camera_light->spot_cutoff = 17.5f;
+  camera_light->spot_end_fade = 17.5f;
 
   glm::mat4 projection = glm::perspective(
     glm::radians(45.0f), (float)GetWindowWidth() / (float)GetWindowHeight(), 
     0.1f, 100.0f
   );
 
-  float light_radius = 10.0f;
+  float light_radius = 15.0f;
 
   glm::vec3 ambient_colour = glm::vec3(0.0f, 0.1f, 0.1f);
 
@@ -126,6 +132,7 @@ void Application::Run()
     float delta_time = time - last_time;
     last_time = time;
 
+    cube_transform.angle += 20.0f * delta_time;
 
     _CameraController(camera, delta_time);
     RotateLightAroundTarget(&lights[1], cube_transform, light_radius);
@@ -135,9 +142,11 @@ void Application::Run()
     camera_light->transform.position = camera.position;
     camera_light->direction = camera.forward;
 
+    /************ UPDATING ***********/ 
     /*********** RENDERING ***********/
 
-    cube_mesh->Render(&shader, view, projection, lights, &cube_transform);
+    cube_mesh->Render(&shader, cube_transform, lights, view, projection);
+    floor_mesh->Render(&shader, floor_transform, lights, view, projection);
 
     RenderLights(lights, &light_shader, &camera, projection, view);
 
@@ -147,10 +156,9 @@ void Application::Run()
     ImGui::End();
     EndImGui();
 
-    // ImGui Window Panel Stuff
+    /*********** RENDERING ***********/
 
     glfwSwapBuffers(_window);
-
     glfwGetFramebufferSize(_window, &_width, &_height);
     glViewport(0, 0, GetWindowWidth(), GetWindowHeight());
     projection = glm::perspective(
@@ -162,6 +170,7 @@ void Application::Run()
   }
 
   delete cube_mesh;
+  delete floor_mesh;
 
   CleanLightVertexData();
 }
@@ -215,64 +224,6 @@ void Application::_CameraController(Camera& camera, float delta_time)
   if (glfwGetKey(_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     camera.position.y -= move_speed;
 }
-
-Mesh* Application::_GenerateCubeMesh(const std::vector<Texture*>& textures, int diffuse_count)
-{
-  std::vector<MeshVertex> vertices = {
-  // vertex position          uvs             normals
-    {{-1.0f, -1.0f,  1.0f},   {0.0f,  0.0f},  { 0.0,  0.0,  1.0}},
-    {{ 1.0f, -1.0f,  1.0f},   {1.0f,  0.0f},  { 0.0,  0.0,  1.0}},
-    {{ 1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  { 0.0,  0.0,  1.0}},
-    {{-1.0f,  1.0f,  1.0f},   {0.0f,  1.0f},  { 0.0,  0.0,  1.0}},
-
-    {{-1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  { 0.0,  0.0, -1.0}},
-    {{-1.0f,  1.0f, -1.0f},   {1.0f,  0.0f},  { 0.0,  0.0, -1.0}},
-    {{ 1.0f,  1.0f, -1.0f},   {1.0f,  1.0f},  { 0.0,  0.0, -1.0}},
-    {{ 1.0f, -1.0f, -1.0f},   {0.0f,  1.0f},  { 0.0,  0.0, -1.0}},
-
-    {{-1.0f,  1.0f, -1.0f},   {0.0f,  0.0f},  { 0.0,  1.0,  0.0}},
-    {{-1.0f,  1.0f,  1.0f},   {1.0f,  0.0f},  { 0.0,  1.0,  0.0}},
-    {{ 1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  { 0.0,  1.0,  0.0}},
-    {{ 1.0f,  1.0f, -1.0f},   {0.0f,  1.0f},  { 0.0,  1.0,  0.0}},
-
-    {{-1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  { 0.0, -1.0,  0.0}},
-    {{ 1.0f, -1.0f, -1.0f},   {1.0f,  0.0f},  { 0.0, -1.0,  0.0}},
-    {{ 1.0f, -1.0f,  1.0f},   {1.0f,  1.0f},  { 0.0, -1.0,  0.0}},
-    {{-1.0f, -1.0f,  1.0f},   {0.0f,  1.0f},  { 0.0, -1.0,  0.0}},
-
-    {{ 1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  { 1.0,  0.0,  0.0}},
-    {{ 1.0f,  1.0f, -1.0f},   {1.0f,  0.0f},  { 1.0,  0.0,  0.0}},
-    {{ 1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  { 1.0,  0.0,  0.0}},
-    {{ 1.0f, -1.0f,  1.0f},   {0.0f,  1.0f},  { 1.0,  0.0,  0.0}},
-
-    {{-1.0f, -1.0f, -1.0f},   {0.0f,  0.0f},  {-1.0,  0.0,  0.0}},
-    {{-1.0f, -1.0f,  1.0f},   {1.0f,  0.0f},  {-1.0,  0.0,  0.0}},
-    {{-1.0f,  1.0f,  1.0f},   {1.0f,  1.0f},  {-1.0,  0.0,  0.0}},
-    {{-1.0f,  1.0f, -1.0f},   {0.0f,  1.0f},  {-1.0,  0.0,  0.0}}
-  };
-
-  std::vector<uint32_t> indices = {
-    0,  1,  2,   0,  2,  3,    // front
-    4,  5,  6,   4,  6,  7,    // back
-    8,  9,  10,  8,  10, 11,   // top
-    12, 13, 14,  12, 14, 15,   // bottom
-    16, 17, 18,  16, 18, 19,   // right
-    20, 21, 22,  20, 22, 23,   // left
-  };
-
-  Material material = {};
-  for (int i = 0; i < textures.size(); i++)
-  {
-    if (i >= diffuse_count)
-      material.specular.push_back(textures[i]);
-    else
-      material.diffuse.push_back(textures[i]);
-  }
-
-  Mesh* mesh = new Mesh(vertices, indices, material);
-  return mesh;
-}
-
 
 void MouseCallback(GLFWwindow* window, double x, double y)
 {
