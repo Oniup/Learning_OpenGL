@@ -9,15 +9,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 Mesh::Mesh() 
-  : material({nullptr, nullptr, 0}), _vertices(), _indices(), _vao(0), _vbo(0), _ebo(0)
+  : _material({ std::vector<Texture*>(), std::vector<Texture*>(), 0 }), _vertices(), _indices(), _vao(0), _vbo(0), _ebo(0)
 {
 }
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t> indices, const Material& material, bool init_vertex_data /* = true */)
-  : material({nullptr, nullptr, 0}), _vertices(vertices), _indices(indices), _vao(0), _vbo(0), _ebo(0)
+  : _material({ material.diffuse, material.specular, material.shininess }), _vertices(vertices), _indices(indices), _vao(0), _vbo(0), _ebo(0)
 {
-  this->material = material;
-
   if (init_vertex_data)
     _InitVertexData();
 }
@@ -31,7 +29,7 @@ Mesh& Mesh::operator=(const Mesh& mesh)
 {
   Free();
 
-  material = mesh.material;
+  _material = mesh._material;
   _vertices = mesh._vertices;
   _indices = mesh._indices;
 
@@ -40,14 +38,14 @@ Mesh& Mesh::operator=(const Mesh& mesh)
   return *this;
 }
 
-Mesh* Mesh::GenerateCube(Texture* diffuse, Texture* specular, int shininess)
+Mesh* Mesh::GenerateCube(const Material& material)
 {
   std::vector<Vertex> vertices = {
   // vertex data          uv           normals
-    { glm::vec3( 1.0f, -1.0f, -1.0f),  glm::vec2(1.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f) }, // bottom right
-    { glm::vec3( 1.0f,  1.0f, -1.0f),  glm::vec2(1.0f, 1.0f), glm::vec3( 0.0f,  0.0f, -1.0f) }, // top right
-    { glm::vec3(-1.0f,  1.0f, -1.0f),  glm::vec2(0.0f, 1.0f), glm::vec3( 0.0f,  0.0f, -1.0f) }, // top left
-    { glm::vec3(-1.0f, -1.0f, -1.0f),  glm::vec2(0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f) }, // bottom left
+    { glm::vec3( 1.0f, -1.0f, -1.0f),  glm::vec2(1.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f) },
+    { glm::vec3( 1.0f,  1.0f, -1.0f),  glm::vec2(1.0f, 1.0f), glm::vec3( 0.0f,  0.0f, -1.0f) },
+    { glm::vec3(-1.0f,  1.0f, -1.0f),  glm::vec2(0.0f, 1.0f), glm::vec3( 0.0f,  0.0f, -1.0f) },
+    { glm::vec3(-1.0f, -1.0f, -1.0f),  glm::vec2(0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f) },
 
     { glm::vec3( 1.0f, -1.0f,  1.0f),  glm::vec2(1.0f, 0.0f), glm::vec3( 0.0f,  0.0f,  1.0f) },
     { glm::vec3( 1.0f,  1.0f,  1.0f),  glm::vec2(1.0f, 1.0f), glm::vec3( 0.0f,  0.0f,  1.0f) },
@@ -82,12 +80,7 @@ Mesh* Mesh::GenerateCube(Texture* diffuse, Texture* specular, int shininess)
     15, 14, 12, 14, 12, 13,
     19, 18, 16, 18, 16, 17,
     23, 22, 20, 22, 20, 21
-  };
-
-  Material material = {};
-  material.diffuse = diffuse;
-  material.specular = specular;
-  material.shininess = shininess;
+  };  
 
   Mesh* mesh = new Mesh(vertices, indices, material);
   return mesh;
@@ -105,17 +98,48 @@ void Mesh::Render(Shader* shader, const Transform& transform, const std::vector<
   glm::mat4 view_model = view * model;
 
   uint32_t u_view_model = glGetUniformLocation(shader->Id(), "u_view_model");
-  uint32_t u_projection = glGetUniformLocation(shader->Id(), "u_projection");
+  uint32_t u_projection = glGetUniformLocation(shader->Id(), "u_projection");  
   glUniformMatrix4fv(u_view_model, 1, GL_FALSE, &view_model[0][0]);
   glUniformMatrix4fv(u_projection, 1, GL_FALSE, &projection[0][0]);
 
-  // textures
-  uint32_t u_diffuse = glGetUniformLocation(shader->Id(), "u_material.diffuse");
-  uint32_t u_specular = glGetUniformLocation(shader->Id(), "u_material.specular");
-  material.diffuse->Bind(0);
-  material.specular->Bind(1);
-  glUniform1i(u_diffuse, 0);
-  glUniform1i(u_specular, 1);
+  // material
+  uint32_t u_shininess = glGetUniformLocation(shader->Id(), "u_material.shininess");
+  glUniform1i(u_shininess, _material.shininess);
+
+  int texture_offset = 0;
+  for (int i = 0; i < 2; i++)
+  {
+    std::string texture_name;
+    std::vector<Texture*>* textures = nullptr;
+    uint32_t u_count_location = 0;
+
+    switch (i)
+    {
+      case 0:
+        texture_name = "u_material.diffuse[";
+        textures = &_material.diffuse;
+        u_count_location = glGetUniformLocation(shader->Id(), "u_material.diffuse_count");
+        break;
+      case 1:
+        texture_name = "u_material.specular[";
+        textures = &_material.specular;
+        u_count_location = glGetUniformLocation(shader->Id(), "u_material.specular_count");
+        
+        break;
+    }
+
+    glUniform1i(u_count_location, textures->size());
+
+    for (int j = 0; j < textures->size(); j++)
+    {
+      std::string name = texture_name + std::to_string(j) + "]";
+      uint32_t u_location = glGetUniformLocation(shader->Id(), name.c_str());
+      textures->at(j)->Bind(texture_offset);
+      glUniform1i(u_location, texture_offset);
+
+      texture_offset++;
+    }
+  }
 
   // lighting
   uint32_t u_lights_count = glGetUniformLocation(shader->Id(), "u_lights_count");
@@ -174,9 +198,9 @@ void Mesh::Free()
     _vao = 0;
   }
 
-  material.diffuse = nullptr;
-  material.specular = nullptr;
-  material.shininess = 0;
+  _material.diffuse.clear();
+  _material.specular.clear();
+  _material.shininess = 0;
 
   _vertices.clear();
   _indices.clear();

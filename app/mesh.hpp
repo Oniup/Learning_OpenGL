@@ -20,16 +20,13 @@ struct Vertex
 
 struct Material
 {
-  Texture* diffuse;
-  Texture* specular;
+  std::vector<Texture*> diffuse;
+  std::vector<Texture*> specular;
   int shininess;
 };
 
 class Mesh
 {
-public:
-  Material material;
-
 public:
   Mesh();
   Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t> indices, const Material& material, bool init_vertex_data = true);
@@ -38,19 +35,25 @@ public:
   Mesh& operator=(const Mesh& mesh);
 
 public:
-  static Mesh* GenerateCube(Texture* diffuse, Texture* specular, int shininess);
+  inline const Material* GetMaterial() const { return &_material; }
+  inline const std::vector<Vertex>* GetVertices() const { return &_vertices; }
+  inline const std::vector<uint32_t>* GetIndices() const { return &_indices; }
+
+  static Mesh* GenerateCube(const Material& material);
 
 public:
   void Render(Shader* shader, const Transform& transform, const std::vector<Light>& lights, const glm::mat4& view, const glm::mat4& projection);
   void Free();
 
 private:
+  Material _material;
   std::vector<Vertex> _vertices;
   std::vector<uint32_t> _indices;
   uint32_t _vao, _vbo, _ebo;
 
 private:
   void _InitVertexData();
+
 };
 
 #endif // __MESH_HPP__

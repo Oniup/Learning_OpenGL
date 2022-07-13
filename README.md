@@ -3,7 +3,11 @@
 Purpose of this is to learn OpenGL for 3D applications, this will include more complex rendering techniques that
 doesn't just involve rendering 2D planes. The knowledge gained from this will be applied to Safire Engine in the future
 
-from https://learnopengl.com
+***Learning from:*** https://learnopengl.com
+
+***the 3D models are from here:***
+*Retro PC*:     https://sketchfab.com/3d-models/concept-retro-computer-free-d91ef7be56a644a79a4a607a95dc0976
+*Cartoon Car*:  https://sketchfab.com/3d-models/cartoon-car-09431a8df4344a84aa83a4095bef10fc
 
 ## build
 
@@ -25,6 +29,9 @@ from https://learnopengl.com
 
 ## Version History
 
+* ***(13/7/2022)***
+  * added some models to the file directory
+  * finished mesh implementation with correct lighting
 * ***(10/07/2022)***
   * Updated the vertex data for the light to be using a element buffer array
   * Mesh implementation

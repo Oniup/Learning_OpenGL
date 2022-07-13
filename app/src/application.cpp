@@ -56,8 +56,16 @@ void Application::Run()
   floor_transform.scale = glm::vec3(5.0f, 0.2f, 5.0f);
   floor_transform.rotation = glm::vec3(0.0f, 0.0f, 1.0f);
 
-  Mesh* cube_mesh = Mesh::GenerateCube(&crate_texture, &crate_specular_texture, 16);
-  Mesh* floor_mesh = Mesh::GenerateCube(&floor_texture, &floor_specular_texture, 32);
+  Material material = {};
+  material.diffuse = { &crate_texture };
+  material.specular = { &crate_specular_texture };
+  material.shininess = 32;
+  Mesh* cube_mesh = Mesh::GenerateCube(material);
+
+  material.diffuse = { &floor_texture };
+  material.specular = { &floor_specular_texture };
+  material.shininess = 100;
+  Mesh* floor_mesh = Mesh::GenerateCube(material);
 
   GenerateLightVertexData();
 
@@ -75,14 +83,14 @@ void Application::Run()
     light.transform.angle = 0.0f;
 
     light.type = LIGHT_TYPE_POINT;
-    light.diffuse = glm::vec3(1.0f, 0.9f, 0.9f);
+    light.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
     light.specular = glm::vec3(0.0f);
     light.ambient = glm::vec3(0.0f, 0.1f, 0.1f);
     light.direction = glm::vec3(0.0f);
 
     light.constant = 1.0f;
-    light.linear = 0.09f;
-    light.quadratic = 0.032f;
+    light.linear = 0.022f;
+    light.quadratic = 0.0019f;
 
     lights.push_back(light);
   }
