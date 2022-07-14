@@ -1,21 +1,19 @@
-#include <app/application.hpp>
+#include "app/application.hpp"
+
+#include "app/graphics_types.hpp"
+#include "app/transform.hpp"
+#include "app/light.hpp"
+#include "app/imgui_handler.hpp"
+#include "app/model.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
 
-#include <app/graphics_types.hpp>
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <app/transform.hpp>
-#include <app/light.hpp>
-#include <app/imgui_handler.hpp>
-#include <app/mesh.hpp>
 
 static Camera camera;
 static bool cursor_mode = true;
@@ -41,37 +39,13 @@ void Application::Run()
   Shader shader("app/assets/shaders/phong.vert", "app/assets/shaders/phong.frag");
   Shader light_shader("app/assets/shaders/light.vert", "app/assets/shaders/light.frag");
 
-  Texture crate_texture("app/assets/images/crate.png", false);
-  Texture crate_specular_texture("app/assets/images/crate_specular.png", false);
-
-  Texture floor_texture("app/assets/images/floor.png", false);
-  Texture floor_specular_texture("app/assets/images/floor_specular.png", false);
-
-  Transform cube_transform = {};
-  cube_transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
-  cube_transform.rotation = glm::vec3(0.0f, 1.0f, 1.0f);
-
-  Transform floor_transform = {};
-  floor_transform.position = glm::vec3(0.0f, -3.0f, 0.0f);
-  floor_transform.scale = glm::vec3(5.0f, 0.2f, 5.0f);
-  floor_transform.rotation = glm::vec3(0.0f, 0.0f, 1.0f);
-
-  Material material = {};
-  material.diffuse = { &crate_texture };
-  material.specular = { &crate_specular_texture };
-  material.shininess = 32;
-  Mesh* cube_mesh = Mesh::GenerateCube(material);
-
-  material.diffuse = { &floor_texture };
-  material.specular = { &floor_specular_texture };
-  material.shininess = 100;
-  Mesh* floor_mesh = Mesh::GenerateCube(material);
-
   GenerateLightVertexData();
 
   camera.position = glm::vec3(0.0f, 0.0f, 20.0f);
   camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
   camera.forward = glm::vec3(0.0f, 0.0f, -1.0f);
+
+  Model model("app/assets/models/survival-guitar-backpack/backpack.obj", &shader);
 
   std::vector<Light> lights;
   for (int i = 0; i < 3; i++)
@@ -83,9 +57,9 @@ void Application::Run()
     light.transform.angle = 0.0f;
 
     light.type = LIGHT_TYPE_POINT;
+    light.ambient = glm::vec3(0.0f, 0.0f, 0.0f);
     light.diffuse = glm::vec3(0.0f, 0.0f, 0.0f);
     light.specular = glm::vec3(0.0f);
-    light.ambient = glm::vec3(0.0f, 0.1f, 0.1f);
     light.direction = glm::vec3(0.0f);
 
     light.constant = 1.0f;
@@ -113,7 +87,7 @@ void Application::Run()
 
   float light_radius = 15.0f;
 
-  glm::vec3 ambient_colour = glm::vec3(0.0f, 0.1f, 0.1f);
+  glm::vec3 ambient_colour = glm::vec3(0.0f, 0.0f, 0.0f);
 
   while (!glfwWindowShouldClose(_window))
   {
@@ -140,10 +114,9 @@ void Application::Run()
     float delta_time = time - last_time;
     last_time = time;
 
-    cube_transform.angle += 20.0f * delta_time;
-
     _CameraController(camera, delta_time);
-    RotateLightAroundTarget(&lights[1], cube_transform, light_radius);
+    static const Transform rotate_around_this_point = {};
+    RotateLightAroundTarget(&lights[1], rotate_around_this_point, light_radius);
 
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.up);
 
@@ -152,9 +125,6 @@ void Application::Run()
 
     /************ UPDATING ***********/ 
     /*********** RENDERING ***********/
-
-    cube_mesh->Render(&shader, cube_transform, lights, view, projection);
-    floor_mesh->Render(&shader, floor_transform, lights, view, projection);
 
     RenderLights(lights, &light_shader, &camera, projection, view);
 
@@ -176,9 +146,6 @@ void Application::Run()
 
     glfwPollEvents();
   }
-
-  delete cube_mesh;
-  delete floor_mesh;
 
   CleanLightVertexData();
 }

@@ -1,9 +1,10 @@
 #ifndef __IMGUI_HANDLER_HPP__
 #define __IMGUI_HANDLER_HPP__
 
+#include <vector>
+
 #include <glm/glm.hpp>
 #include <imgui/imgui.h>
-#include <vector>
 
 class Application;
 class Light;

@@ -1,4 +1,4 @@
-#include <app/light.hpp>
+#include "app/light.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +6,6 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/gtc/matrix_transform.hpp>
 
 static uint32_t _s_vao, _s_ebo, _s_vbo;

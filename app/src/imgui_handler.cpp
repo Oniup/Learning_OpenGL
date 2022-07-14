@@ -1,18 +1,18 @@
-#include <app/imgui_handler.hpp>
+#include "app/imgui_handler.hpp"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <imgui/imgui_internal.h>
-#include <imgui/backends/imgui_impl_glfw.h>
-#include <imgui/backends/imgui_impl_opengl3.h>
-
-#include <app/application.hpp>
-#include <app/light.hpp>
+#include "app/application.hpp"
+#include "app/light.hpp"
 
 #include <stdio.h>
 #include <stdint.h>
 #include <string>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <imgui/imgui_internal.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
+
 
 static Application* current_app = nullptr;
 

@@ -2,6 +2,7 @@
 #define __MESH_HPP__
 
 #include <glm/glm.hpp>
+
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -36,6 +37,7 @@ public:
 
 public:
   inline const Material* GetMaterial() const { return &_material; }
+  inline Material* GetMaterial() { return &_material; }
   inline const std::vector<Vertex>* GetVertices() const { return &_vertices; }
   inline const std::vector<uint32_t>* GetIndices() const { return &_indices; }
 

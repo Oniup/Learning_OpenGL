@@ -1,10 +1,12 @@
 #ifndef __APPLICATION_HPP__
 #define __APPLICATION_HPP__
 
+#include "app/camera.hpp"
+
+#include <glm/glm.hpp>
+
 #include <vector>
 #include <string>
-#include <glm/glm.hpp>
-#include <app/camera.hpp>
 
 typedef struct GLFWwindow GLFWwindow;
 class Mesh;
