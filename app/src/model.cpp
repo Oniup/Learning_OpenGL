@@ -1,158 +1,150 @@
 #include "app/model.hpp"
 
-#include "app/graphics_types.hpp"
 #include "app/utils.hpp"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
 Model::Model()
-  : transform({ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f}), 
-    _shader(nullptr), _meshes(), _directory(nullptr)
+    : transform(), m_meshes(), m_textures(), m_shader(nullptr), m_directory("")
 {
+}
+
+Model::Model(const Model& model)
+    : transform(model.transform), m_meshes(model.m_meshes), m_textures(), m_shader(model.m_shader), m_directory(model.m_directory)
+{
+}
+
+Model::Model(Model&& model)
+    : transform(static_cast<Transform&&>(model.transform)), m_meshes(static_cast<std::vector<Mesh*>&&>(model.m_meshes)),
+      m_textures(static_cast<std::vector<Texture*>&&>(model.m_textures)), 
+      m_shader(model.m_shader), m_directory(static_cast<std::string&&>(model.m_directory))
+{
+    model.m_shader = nullptr;
 }
 
 Model::Model(const char* path)
-  : Model(path, nullptr)
+    : Model()
 {
-}
-
-Model::Model(const char* path, Shader* shader)
-{
-  _shader = shader;
-
-  _LoadModel(path);
+    m_LoadModel(path);
 }
 
 Model::~Model()
 {
-  for (Mesh& mesh : _meshes)
-  {
-    for (int i = 0; i < 2; i++)
-    {
-      std::vector<Texture*>* textures;
-      Material* material = mesh.GetMaterial();
-      switch (i)
-      {
-        case 0: textures = &material->diffuse; break;
-        case 1: textures = &material->specular; break;
-      }
+    Clear();
+}
 
-      for (int i = 0; i < textures->size(); i++)
-        delete textures->at(i);
-    }
-  }
+Model& Model::operator=(const Model& model)
+{
+    Clear();
 
-  delete[] _directory;
+    transform = model.transform;
+    m_meshes = model.m_meshes;
+    m_textures = model.m_textures;
+    m_shader = model.m_shader;
+    m_directory = model.m_directory;
+
+    return *this;
+}
+
+Model& Model::operator=(Model&& model)
+{
+    Clear();
+
+    transform = static_cast<Transform&&>(model.transform);
+    m_meshes = static_cast<std::vector<Mesh*>&&>(model.m_meshes);
+    m_textures = static_cast<std::vector<Texture*>&&>(model.m_textures);
+    m_shader = model.m_shader;
+    m_directory = static_cast<std::string&&>(model.m_directory);
+
+    model.m_shader = nullptr;
+
+    return *this;
+}
+
+void Model::Render(const glm::mat4& view, const glm::mat4& projection)
+{
+    for (Mesh* mesh : m_meshes)
+        mesh->Render(m_shader, view, projection, transform);
+}
+
+void Model::Clear()
+{
+    for (Mesh* mesh : m_meshes)
+        delete mesh;
+
+    for (Texture* texture : m_textures)
+        delete texture;
+    
+    m_textures.clear();
+    m_meshes.clear();
+    m_directory.clear();
+    m_shader = nullptr;
+    transform.position = glm::vec3(0.0f);
+    transform.scale = glm::vec3(0.0f);
+    transform.rotation = glm::vec3(0.0f);
+    transform.angle = 0.0f;
 }
 
 void Model::SetShader(Shader* shader)
 {
-  _shader = shader;
+    m_shader = shader;
 }
 
-void Model::Render(std::vector<Light>& lights, const glm::mat4& view, const glm::mat4& projection)
+void Model::m_LoadModel(const char* path)
 {
-  for (Mesh& mesh : _meshes)
-    mesh.Render(_shader, transform, lights, view, projection);
-}
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(std::string(path), aiProcess_Triangulate | aiProcess_FlipUVs);
 
-void Model::_LoadModel(const char* path)
-{
-  Assimp::Importer importer;
-  const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
-  
-  if (!scene)
-  {
-    printf("Failed to Load Model: %s\n", importer.GetErrorString());
-    exit(-1);
-  }
-
-  _directory = utils::GetPathDirectory(path);
-
-  _ProcessNode(scene->mRootNode, scene);
-}
-
-void Model::_ProcessNode(aiNode* node, const aiScene* scene)
-{
-  for (int i = 0; i < node->mNumMeshes; i++)
-  {
-    aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    _meshes.emplace_back(std::move(_ProcessMesh(mesh, scene)));
-  }
-
-  for (int i = 0; i < node->mNumChildren; i++)
-  {
-    _ProcessNode(node->mChildren[i], scene);
-  }
-}
-
-Mesh Model::_ProcessMesh(aiMesh* mesh, const aiScene* scene)
-{
-  std::vector<Vertex> vertices;
-  std::vector<uint32_t> indices;
-  Material material;
-
-  // loading vertices
-  for (int i = 0; i < mesh->mNumVertices; i++)
-  {
-    vertices.push_back({
-      glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z),
-      (mesh->mTextureCoords[0] ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : glm::vec2(0.0f)),
-      glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z)
-    });
-  }
-
-  // loading indices
-  for (int i = 0; i < mesh->mNumFaces; i++)
-  {
-    aiFace& face = mesh->mFaces[i];
-    for (int j = 0; j < face.mNumIndices; j++)
-      indices.push_back(face.mIndices[j]);
-  }
-
-  // loading material
-  if (mesh->mMaterialIndex >= 0)
-  {
-    aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-    std::vector<Texture*> loaded_textures;
-    material.diffuse = _LoadMaterialTextures(mat, aiTextureType_DIFFUSE, &loaded_textures);
-    material.specular = _LoadMaterialTextures(mat, aiTextureType_SPECULAR, &loaded_textures);
-    material.shininess = 32;
-  }
-
-  return Mesh(vertices, indices, material);
-}
-
-std::vector<Texture*> Model::_LoadMaterialTextures(aiMaterial* material, aiTextureType type, std::vector<Texture*>* loaded_textures)
-{
-  std::vector<Texture*> textures;
-
-  printf("texture_count: %u\n", material->GetTextureCount(type));
-  for (int i = 0; i < material->GetTextureCount(type); i++)
-  {
-    aiString name;
-    material->GetTexture(type, i, &name);
-    std::string path = std::string(std::string(_directory) + "/" + name.C_Str());
-
-    bool skip_texture = false;
-    for (Texture* texture : *loaded_textures)
+    if (!scene)
     {
-      if (path == texture->GetPath())
-      {
-        skip_texture = true;
-        break;
-      }
+        printf("failed to load model\nassimp error: %s\n", importer.GetErrorString());
+        exit(-1);
     }
 
-    if (!skip_texture)
-    {
-      Texture* texture = new Texture(path.c_str(), true);
-      textures.push_back(texture);
-      loaded_textures->push_back(texture);
-    }
-  }
+    m_directory = utils::GetPathDirectory(path);
 
-  return textures;
+    m_ProcessNode(scene->mRootNode, scene);
 }
+
+void Model::m_ProcessNode(aiNode* node, const aiScene* scene)
+{
+    for (int i = 0; i < node->mNumMeshes; i++)
+    {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        m_meshes.push_back(m_ProcessMesh(mesh, scene));
+    }
+
+    for (int i = 0; i < node->mNumChildren; i++)
+        m_ProcessNode(node->mChildren[i], scene);
+}
+
+Mesh* Model::m_ProcessMesh(aiMesh* mesh, const aiScene* scene)
+{
+    std::vector<Mesh::Vertex> vertices;
+    std::vector<uint32_t> indices;
+
+    for (int i = 0; i < mesh->mNumVertices; i++)
+    {
+        vertices.push_back({
+            glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z),
+            glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y),
+            glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z)
+        });
+    }
+
+    for (int i = 0; i < mesh->mNumFaces; i++)
+    {
+        aiFace* face = &mesh->mFaces[i];
+        for (int j = 0; j < face->mNumIndices; j++)
+            indices.push_back(face->mIndices[j]);
+    }
+    
+    // TODO: get the diffuse and specular texture maps 
+
+    Mesh* result = new Mesh(vertices, indices);
+    return result;
+}
+
+void Model::m_LoadTextures(aiMaterial* material, aiTextureType type)
+{
+    // TODO: load textures
+}
+

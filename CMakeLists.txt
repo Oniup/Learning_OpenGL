@@ -16,52 +16,52 @@ add_subdirectory(dependencies/glad)
 add_subdirectory(dependencies/imgui)
 
 if (UNIX)
-  find_package(assimp)
-  if (${assimp_FOUND})
-    message("Found Assimp Package")
-  else ()
-    add_subdirectory(dependencies/assimp)
-  endif ()
+    find_package(assimp)
+    if (${assimp_FOUND})
+        message("Found Assimp Package")
+    else ()
+        add_subdirectory(dependencies/assimp)
+    endif ()
 
-  find_package(glfw3)
-  if (${glfw3_FOUND})
-    message("Found GLFW3 Package")
-  else ()
-    add_subdirectory(dependencies/glfw)
-  endif ()
+    find_package(glfw3)
+    if (${glfw3_FOUND})
+        message("Found GLFW3 Package")
+    else ()
+        add_subdirectory(dependencies/glfw)
+    endif ()
 endif ()
 
 if (WIN32)
-  add_subdirectory(dependencies/assimp)
-  add_subdirectory(dependencies/glfw)
+    add_subdirectory(dependencies/assimp)
+    add_subdirectory(dependencies/glfw)
 endif ()
 
 file(GLOB_RECURSE APPLICATION_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "app/src/*.cpp")
 add_executable(${CMAKE_PROJECT_NAME} ${APPLICATION_SOURCES} main.cpp)
 
 target_include_directories(
-  ${CMAKE_PROJECT_NAME}
+    ${CMAKE_PROJECT_NAME}
 
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glad
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw/include
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/assimp/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glad
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw/include
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/assimp/include
 )
 
 target_link_libraries(
-  ${CMAKE_PROJECT_NAME}
+    ${CMAKE_PROJECT_NAME}
 
-  PRIVATE glad
-  PRIVATE glfw
-  PRIVATE OpenGL::GL
-  PRIVATE assimp
-  PRIVATE imgui
+    PRIVATE glad
+    PRIVATE glfw
+    PRIVATE OpenGL::GL
+    PRIVATE assimp
+    PRIVATE imgui
 )
 
 # copying over all the shaders and textures
 
 add_custom_target(copy_assets
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/app/assets ${CMAKE_CURRENT_BINARY_DIR}/app/assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/app/assets ${CMAKE_CURRENT_BINARY_DIR}/app/assets
 )
 add_dependencies(${CMAKE_PROJECT_NAME} copy_assets)

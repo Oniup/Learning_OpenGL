@@ -4,7 +4,7 @@
 namespace utils
 {
 
-  const char* GetPathDirectory(const char* path);
+    const char* GetPathDirectory(const char* path);
 
 }
 

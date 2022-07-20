@@ -1,12 +1,15 @@
-#ifndef __MODEL_HPP__
-#define __MODEL_HPP__
+#ifndef MODEL_HPP
+#define MODEL_HPP
 
 #include "app/mesh.hpp"
+#include "app/graphics_types.hpp"
 #include "app/transform.hpp"
 
+#include <stdio.h>
 #include <vector>
 #include <string>
 
+#include <glm/glm.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -14,30 +17,35 @@
 class Model
 {
 public:
-  Transform transform;
+    Transform transform;
 
 public:
-  Model();
-  Model(const char* path);
-  Model(const char* path, Shader* shader);
-  ~Model();
+    Model();
+    Model(const Model& model);
+    Model(Model&& model);
+    Model(const char* path);
+    ~Model();
+
+    Model& operator=(const Model& model);
+    Model& operator=(Model&& model);
 
 public:
-  void SetShader(Shader* shader);
-  void Render(std::vector<Light>& lights, const glm::mat4& view, const glm::mat4& projection);
+    void Render(const glm::mat4& view, const glm::mat4& projection);
+    void Clear();
+    void SetShader(Shader* shader);
 
 private:
-  Shader* _shader;
-
-  std::vector<Mesh> _meshes;
-  const char* _directory;
+    std::vector<Mesh*> m_meshes;
+    std::vector<Texture*> m_textures;
+    Shader* m_shader;
+    std::string m_directory;
 
 private:
-  void _LoadModel(const char* path);
-  void _ProcessNode(aiNode* node, const aiScene* scene);
-  Mesh _ProcessMesh(aiMesh* mesh, const aiScene* scene);
-  std::vector<Texture*> _LoadMaterialTextures(aiMaterial* material, aiTextureType type, std::vector<Texture*>* loaded_textures);
+    void m_LoadModel(const char* path);
+    void m_ProcessNode(aiNode* node, const aiScene* scene);
+    Mesh* m_ProcessMesh(aiMesh* mesh, const aiScene* scene);
+    void m_LoadTextures(aiMaterial* material, aiTextureType type);
 
 };
 
-#endif // __MODEL_HPP__
+#endif // MODEL_HPP

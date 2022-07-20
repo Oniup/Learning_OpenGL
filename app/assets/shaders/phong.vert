@@ -1,4 +1,4 @@
-#version 450 core 
+#version 450 core
 
 layout (location = 0) in vec3 a_vertex_pos;
 layout (location = 1) in vec2 a_uv;
@@ -13,10 +13,10 @@ out vec3 frag_position;
 
 void main()
 {
-  vec4 position = u_view_model * vec4(a_vertex_pos.xyz, 1.0);
-  gl_Position = u_projection * position;
+    vec4 position = u_view_model * vec4(a_vertex_pos.xyz, 1.0);
+    gl_Position = u_projection * position;
 
-  uv = a_uv;
-  normal = normalize(mat3(transpose(inverse(u_view_model))) * a_normal);
-  frag_position = position.xyz;
+    uv = a_uv;
+    normal = normalize(mat3(transpose(inverse(u_view_model))) * a_normal);
+    frag_position = position.xyz;
 }

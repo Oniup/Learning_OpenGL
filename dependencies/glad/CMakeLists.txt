@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
 
 add_library(
-  glad STATIC
+    glad STATIC
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/glad/glad.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/glad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/glad/glad.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/glad.c
 )
 
 target_include_directories(
-  glad 
+    glad 
 
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )

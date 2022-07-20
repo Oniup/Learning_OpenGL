@@ -29,7 +29,10 @@ doesn't just involve rendering 2D planes. The knowledge gained from this will be
 
 ## Version History
 
-* ***(13/7/2022)***
+* ***(20/07/2022)***
+  * Can finally render a model to the screen
+  * Removed the Lights and Textures for the time being to simplify to model implementation
+* ***(13/07/2022)***
   * added some models to the file directory
   * finished mesh implementation with correct lighting
 * ***(10/07/2022)***

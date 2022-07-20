@@ -6,5 +6,5 @@ uniform vec3 u_light_colour;
 
 void main()
 {
-  frag_colour = vec4(u_light_colour.rgb, 1.0);
+    frag_colour = vec4(u_light_colour.rgb, 1.0);
 }

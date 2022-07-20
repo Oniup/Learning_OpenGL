@@ -9,28 +9,28 @@
 
 enum LightType
 {
-  LIGHT_TYPE_POINT = 0,
-  LIGHT_TYPE_DIRECTIONAL,
-  LIGHT_TYPE_SPOT
+    LIGHT_TYPE_POINT = 0,
+    LIGHT_TYPE_DIRECTIONAL,
+    LIGHT_TYPE_SPOT
 };
 
 struct Light
 {
-  Transform transform;
+    Transform transform;
 
-  LightType type;
-  glm::vec3 direction;
+    LightType type;
+    glm::vec3 direction;
 
-  glm::vec3 ambient;
-  glm::vec3 diffuse;
-  glm::vec3 specular;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
 
-  float constant;
-  float linear;
-  float quadratic;
+    float constant;
+    float linear;
+    float quadratic;
 
-  float spot_start_fade;
-  float spot_end_fade;
+    float spot_start_fade;
+    float spot_end_fade;
 };
 
 void GenerateLightVertexData();
